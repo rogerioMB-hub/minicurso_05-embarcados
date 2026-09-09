@@ -222,7 +222,7 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi:
 ```json
 {
   "version": 1,
-  "author": "RMB - Mini Curso Embarcados 05 — Aula 1",
+  "author": "Uri Shaked",
   "editor": "wokwi",
   "parts": [
     {
@@ -230,21 +230,24 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi:
       "id": "esp",
       "top": 0,
       "left": 0,
-      "attrs": {}
+      "attrs": { "env": "micropython-20220117-v1.18" }
     },
     {
-      "type": "wokwi-neopixel-ring",
+      "type": "wokwi-led-ring",
       "id": "ring1",
-      "top": 80,
-      "left": 220,
-      "attrs": { "pixels": "16" }
+      "top": -25,
+      "left": 125,
+      "attrs": { "pixels": "16", "background": "black" }
     }
   ],
   "connections": [
-    [ "ring1:DIN",  "esp:4",   "green", [] ],
-    [ "ring1:VCC",  "esp:3V3", "red",   [] ],
-    [ "ring1:GND",  "esp:GND", "black", [] ]
-  ]
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "ring1:DIN", "esp:D4", "green", [ "v6.44", "h-56.61", "v-14.4" ] ],
+    [ "ring1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "ring1:GND", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
 }
 ```
 
