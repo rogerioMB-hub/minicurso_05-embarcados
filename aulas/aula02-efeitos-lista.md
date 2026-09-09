@@ -89,7 +89,7 @@ Mesmo circuito da Aula 1 — nenhuma alteração necessária.
 # Pico: use GPIO 0 no lugar de GPIO 4
 ```
 
-*Link do Wokwi → mesmo projeto da Aula 1*
+*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs](https://wokwi.com/projects/474715111472158721)*
 
 ---
 
@@ -270,7 +270,7 @@ np.write()
 
 Mesmo `diagram.json` da Aula 1 — nenhuma alteração necessária.
 
-> Se ainda não criou o projeto no Wokwi, copie o `diagram.json` da Aula 1 e use o mesmo circuito.
+> ✅ Circuito validado — projeto disponível em [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721)
 
 ---
 

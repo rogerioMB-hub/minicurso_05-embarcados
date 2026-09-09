@@ -90,7 +90,7 @@ ESP32 GND    ──► GND
 
 > ⚠️ **Atenção:** em projetos reais com muitos LEDs em brilho máximo, use fonte externa de 5 V para o anel. No Wokwi, 3.3 V funciona normalmente.
 
-*Link do Wokwi → a publicar após validação do diagram.json*
+*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs](https://wokwi.com/projects/474715111472158721)*
 
 ---
 
@@ -251,7 +251,7 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi:
 }
 ```
 
-> ⚠️ Valide as conexões no simulador antes de publicar — confira se o anel acende ao executar a Parte A.
+> ✅ Circuito validado — projeto disponível em [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721)
 
 ---
 

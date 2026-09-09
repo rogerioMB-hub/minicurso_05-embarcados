@@ -83,13 +83,13 @@ title: "Referências e Links Wokwi"
 | Aula | Título | Link Wokwi |
 |------|--------|------------|
 | 00-extra | Tuplas em Python | — (sem circuito) |
-| 1 | Primeiro Pixel | *(a publicar após validação)* |
-| 2 | Efeitos com Lista | *(mesmo projeto da Aula 1)* |
-| 3 | Paleta com Dicionário | *(mesmo projeto da Aula 1)* |
-| 4 | Efeitos Animados | *(mesmo projeto da Aula 1)* |
-| 5 | Meteoro, Respiração e Cometa | *(mesmo projeto da Aula 1)* |
+| 1 | Primeiro Pixel | [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721) |
+| 2 | Efeitos com Lista | mesmo projeto da Aula 1 |
+| 3 | Paleta com Dicionário | mesmo projeto da Aula 1 |
+| 4 | Efeitos Animados | mesmo projeto da Aula 1 |
+| 5 | Meteoro, Respiração e Cometa | mesmo projeto da Aula 1 |
 
-> Como todas as aulas usam o mesmo circuito, um único projeto Wokwi salvo é suficiente para todo o mini-curso.
+> Como todas as aulas usam o mesmo circuito, um único projeto Wokwi é suficiente para todo o mini-curso.
 
 ---
 
