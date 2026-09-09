@@ -1,0 +1,33 @@
+title: "Sistemas Embarcados — LEDs RGB e Efeitos Visuais com ESP32"
+description: "Mini curso para o Curso Técnico em Automação Industrial. Controle de LEDs RGB WS2812B com MicroPython — efeitos, animações e paletas de cores."
+
+theme: jekyll-theme-cayman
+
+baseurl: "/minicurso_05-embarcados"
+url: "https://rogeriomb-hub.github.io"
+
+# Navegação entre páginas
+header_pages:
+  - index.md
+  - aulas/aula00-extra-tuplas.md
+  - aulas/aula01-primeiro-pixel.md
+  - aulas/aula02-efeitos-lista.md
+  - aulas/aula03-paleta-dicionario.md
+  - aulas/aula04-efeitos-animados.md
+  - aulas/aula05-meteoro-respiracao-cometa.md
+
+# Configurações gerais
+markdown: kramdown
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+rouge:
+  wrap: true
+
+exclude:
+  - "*.zip"
+  - COMO-PUBLICAR.md
+  - GUIA-CONSTRUCAO.md
