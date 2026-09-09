@@ -23,7 +23,7 @@ title: "Referências e Links Wokwi"
 | Função | GPIO | Aulas |
 |--------|:----:|-------|
 | Anel NeoPixel — DIN (dados) | 4 | 1, 2, 3, 4, 5 |
-| Anel NeoPixel — VCC | 3.3 V | 1, 2, 3, 4, 5 |
+| Anel NeoPixel — VCC | 5 V (hardware real) | 1, 2, 3, 4, 5 |
 | Anel NeoPixel — GND | GND | 1, 2, 3, 4, 5 |
 
 ### Raspberry Pi Pico (alternativa)
@@ -31,7 +31,7 @@ title: "Referências e Links Wokwi"
 | Função | GPIO |
 |--------|:----:|
 | Anel NeoPixel — DIN (dados) | 0 |
-| Anel NeoPixel — VCC | 3.3 V |
+| Anel NeoPixel — VCC | 5 V (hardware real) |
 | Anel NeoPixel — GND | GND |
 
 > Para o Pico, selecione **Raspberry Pi Pico** ao criar o projeto no Wokwi.
@@ -97,7 +97,7 @@ title: "Referências e Links Wokwi"
 
 | Situação | Problema | Solução |
 |----------|----------|---------|
-| Tensão do anel | WS2812B especifica 5 V | No Wokwi, 3.3 V funciona; em hardware real, use fonte 5 V externa |
+| Tensão do anel | WS2812B especifica 5 V | Wokwi usa pino 3V3 por limitação do simulador; em hardware real, use 5 V no VCC do anel |
 | Brilho máximo com muitos LEDs | Consumo elevado | No Wokwi sem limitação; em hardware real, limitar brilho ou usar fonte dedicada |
 | Circuitos gerados automaticamente | Conexões frequentemente incompletas | Validar no Wokwi antes de publicar |
 | `input()` no terminal Wokwi | Funciona normalmente | Use para a Aula 3 (bônus com input interativo) |

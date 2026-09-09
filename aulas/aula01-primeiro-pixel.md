@@ -80,7 +80,7 @@ Sem esse comando, nenhum LED muda de estado — não esqueça!
 
 ```
 ESP32 GPIO4  ──► DIN  (entrada de dados do anel)
-ESP32 3.3V   ──► VCC
+ESP32 5V     ──► VCC  (use pino 5V ou fonte externa)
 ESP32 GND    ──► GND
 ```
 
@@ -88,7 +88,7 @@ ESP32 GND    ──► GND
 # Pico: use GPIO 0 no lugar de GPIO 4
 ```
 
-> ⚠️ **Atenção:** em projetos reais com muitos LEDs em brilho máximo, use fonte externa de 5 V para o anel. No Wokwi, 3.3 V funciona normalmente.
+> ⚠️ **Atenção:** o WS2812B opera com VCC de **5 V** (nominal). No Wokwi o pino 3V3 do ESP32 é utilizado por limitação do simulador — em hardware real, conecte o VCC do anel ao pino **5V** do ESP32 ou a uma fonte externa de 5 V.
 
 *Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs](https://wokwi.com/projects/474715111472158721)*
 
@@ -97,7 +97,7 @@ ESP32 GND    ──► GND
 ## 3. Código
 
 ### Parte A — Acender um único LED
-*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs - Programa A](https://wokwi.com/projects/474716281261575169)*
+
 ```python
 # ============================================================
 # Aula 01 — Parte A: Acender um único LED
@@ -134,7 +134,7 @@ np.write()
 ---
 
 ### Parte B — Acender todos os LEDs
-*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs - Programa B](https://wokwi.com/projects/474716490012107777)*
+
 ```python
 # ============================================================
 # Aula 01 — Parte B: Acender todos os LEDs
@@ -171,7 +171,7 @@ np.write()
 ---
 
 ### Parte C — Função reutilizável
-*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs - Programa C](https://wokwi.com/projects/474716563914705921)*
+
 ```python
 # ============================================================
 # Aula 01 — Parte C: funções acender_todos() e apagar_todos()
@@ -251,7 +251,7 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi:
 }
 ```
 
-> ✅ Circuito base validado — projeto disponível em [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721)
+> ✅ Circuito validado — projeto disponível em [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721)
 
 ---
 

@@ -82,7 +82,7 @@ Mesmo circuito da Aula 1 — nenhuma alteração necessária.
 | ESP32 | Anel NeoPixel |
 |---|---|
 | GPIO 4 | DIN |
-| 3.3 V | VCC |
+| 5 V | VCC (hardware real; Wokwi usa 3V3) |
 | GND | GND |
 
 ```

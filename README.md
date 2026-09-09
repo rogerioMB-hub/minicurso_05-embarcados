@@ -1,6 +1,6 @@
 # Sistemas Embarcados — Mini Curso: LEDs RGB e Efeitos Visuais com ESP32
 
-![Banner do curso](../assets/banner.png)
+![Banner do curso](https://rogeriomb-hub.github.io/minicurso_05-embarcados/assets/banner.png)
 
 > Estudo dirigido para alunos do Curso Técnico em Automação Industrial.
 
