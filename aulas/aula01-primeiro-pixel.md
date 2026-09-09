@@ -97,7 +97,7 @@ ESP32 GND    ──► GND
 ## 3. Código
 
 ### Parte A — Acender um único LED
-
+*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs - Programa A](https://wokwi.com/projects/474716281261575169)*
 ```python
 # ============================================================
 # Aula 01 — Parte A: Acender um único LED
@@ -134,7 +134,7 @@ np.write()
 ---
 
 ### Parte B — Acender todos os LEDs
-
+*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs - Programa B](https://wokwi.com/projects/474716490012107777)*
 ```python
 # ============================================================
 # Aula 01 — Parte B: Acender todos os LEDs
@@ -171,7 +171,7 @@ np.write()
 ---
 
 ### Parte C — Função reutilizável
-
+*Link do Wokwi → [Minicurso 05 — Anel NeoPixel 16 LEDs - Programa C](https://wokwi.com/projects/474716563914705921)*
 ```python
 # ============================================================
 # Aula 01 — Parte C: funções acender_todos() e apagar_todos()
@@ -251,7 +251,7 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi:
 }
 ```
 
-> ✅ Circuito validado — projeto disponível em [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721)
+> ✅ Circuito base validado — projeto disponível em [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721)
 
 ---
 
