@@ -20,6 +20,8 @@ Ao final desta aula você será capaz de:
 - Implementar o efeito cometa com atenuação quadro a quadro
 - Combinar índice circular com `%` para movimentar LEDs pelo anel
 
+> 💡 **Atenção:** esta aula usa `range()` com contagem regressiva — ex: `range(PASSOS, -1, -1)`. Se esse uso não é familiar, leia antes a [Aula 2-extra: for e range() em MicroPython](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula02-extra-for-range) do Mini-curso 01.
+
 ---
 
 ## 1. Conceito

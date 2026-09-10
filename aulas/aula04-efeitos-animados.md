@@ -20,6 +20,8 @@ Ao final desta aula você será capaz de:
 - Animar o arco-íris girando continuamente pelo anel
 - Criar um efeito de pulso (fade in/out) usando divisão inteira `//`
 
+> 💡 **Atenção:** esta aula usa `range()` com contagem regressiva — ex: `range(20, -1, -1)`. Se esse uso não é familiar, leia antes a [Aula 2-extra: for e range() em MicroPython](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula02-extra-for-range) do Mini-curso 01.
+
 ---
 
 ## 1. Conceito
