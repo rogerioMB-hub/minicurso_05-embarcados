@@ -345,71 +345,64 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 
       "left": 0,
       "attrs": { "env": "micropython-20220117-v1.18" }
     },
-    { "type": "wokwi-74hc595", "id": "sr1", "top": 220, "left": 380, "attrs": {} },
     { "type": "wokwi-74hc595", "id": "sr2", "top": 220, "left": 200, "attrs": {} },
     {
       "type": "wokwi-7segment",
-      "id": "sevseg1",
-      "top": 20,
-      "left": 400,
+      "id": "sevseg2",
+      "top": 24.18,
+      "left": 216.28,
       "attrs": { "common": "cathode", "color": "red" }
     },
+    { "type": "wokwi-74hc595", "id": "sr1", "top": 224.7, "left": 377.4, "attrs": {} },
     {
       "type": "wokwi-7segment",
-      "id": "sevseg2",
-      "top": 20,
-      "left": 220,
+      "id": "sevseg1",
+      "top": 24.7,
+      "left": 397.4,
       "attrs": { "common": "cathode", "color": "red" }
     }
   ],
   "connections": [
     [ "esp:TX0", "$serialMonitor:RX", "", [] ],
     [ "esp:RX0", "$serialMonitor:TX", "", [] ],
-
-    [ "sr1:DS",   "esp:D23",   "green",  [] ],
-    [ "sr1:SHCP", "esp:D18",   "blue",   [] ],
-    [ "sr2:SHCP", "esp:D18",   "blue",   [] ],
-    [ "sr1:STCP", "esp:D21",   "purple", [] ],
-    [ "sr2:STCP", "esp:D21",   "purple", [] ],
-    [ "sr1:Q7S",  "sr2:DS",    "green",  [] ],
-
-    [ "sr1:VCC",  "esp:3V3",   "red",    [] ],
-    [ "sr2:VCC",  "esp:3V3",   "red",    [] ],
-    [ "sr1:MR",   "esp:3V3",   "red",    [] ],
-    [ "sr2:MR",   "esp:3V3",   "red",    [] ],
-    [ "sr1:GND",  "esp:GND.1", "black",  [] ],
-    [ "sr2:GND",  "esp:GND.1", "black",  [] ],
-    [ "sr1:OE",   "esp:GND.1", "black",  [] ],
-    [ "sr2:OE",   "esp:GND.1", "black",  [] ],
-
-    [ "sr1:Q0", "sevseg1:A",  "orange", [] ],
-    [ "sr1:Q1", "sevseg1:B",  "orange", [] ],
-    [ "sr1:Q2", "sevseg1:C",  "orange", [] ],
-    [ "sr1:Q3", "sevseg1:D",  "orange", [] ],
-    [ "sr1:Q4", "sevseg1:E",  "orange", [] ],
-    [ "sr1:Q5", "sevseg1:F",  "orange", [] ],
-    [ "sr1:Q6", "sevseg1:G",  "orange", [] ],
-    [ "sr1:Q7", "sevseg1:DP", "orange", [] ],
-    [ "sevseg1:COM.1", "esp:GND.1", "black", [] ],
-    [ "sevseg1:COM.2", "esp:GND.1", "black", [] ],
-
-    [ "sr2:Q0", "sevseg2:A",  "gold", [] ],
-    [ "sr2:Q1", "sevseg2:B",  "gold", [] ],
-    [ "sr2:Q2", "sevseg2:C",  "gold", [] ],
-    [ "sr2:Q3", "sevseg2:D",  "gold", [] ],
-    [ "sr2:Q4", "sevseg2:E",  "gold", [] ],
-    [ "sr2:Q5", "sevseg2:F",  "gold", [] ],
-    [ "sr2:Q6", "sevseg2:G",  "gold", [] ],
-    [ "sr2:Q7", "sevseg2:DP", "gold", [] ],
-    [ "sevseg2:COM.1", "esp:GND.1", "black", [] ],
-    [ "sevseg2:COM.2", "esp:GND.1", "black", [] ]
+    [ "sr2:SHCP", "esp:D18", "blue", [ "v-66.4", "h-98.56", "v-71.9" ] ],
+    [ "sr2:STCP", "esp:D21", "purple", [ "v-56.8", "h-98.56", "v-100.3" ] ],
+    [ "sr2:VCC", "esp:3V3", "red", [ "v-28", "h-88.96", "v-33.5" ] ],
+    [ "sr2:MR", "esp:3V3", "red", [ "v-28", "h-146.56", "v-33.5" ] ],
+    [ "sr2:GND", "esp:GND.1", "black", [ "v76.4", "h-146.56", "v-177.4" ] ],
+    [ "sr2:OE", "esp:GND.1", "black", [ "v-8.8", "h-108.16", "v-62.2" ] ],
+    [ "sr2:Q0", "sevseg2:A", "gold", [ "v-18.4", "h83.84", "v-201.6", "h-44.28" ] ],
+    [ "sr2:Q1", "sevseg2:B", "gold", [ "v9.2", "h103.04", "v-249.6", "h-44.28" ] ],
+    [ "sr2:Q2", "sevseg2:C", "gold", [ "v57.2", "h74.24", "v-182.4", "h-28.8", "v-32.98" ] ],
+    [ "sr2:Q3", "sevseg2:D", "gold", [ "v18.8", "h-21.76", "v-144", "h32.52" ] ],
+    [ "sr2:Q4", "sevseg2:E", "gold", [ "v28.4", "h-40.96", "v-163.2", "h32.52" ] ],
+    [ "sr2:Q5", "sevseg2:F", "gold", [ "v38", "h-60.16", "v-288", "h51.72" ] ],
+    [ "sr2:Q6", "sevseg2:G", "gold", [ "v47.6", "h-79.36", "v-288", "h51.72" ] ],
+    [ "sr2:Q7", "sevseg2:DP", "gold", [ "v28.4", "h16.64", "v-163.2", "h-15.48" ] ],
+    [ "sevseg2:COM.1", "esp:GND.1", "black", [ "v13.78", "h-115.2", "v39.22" ] ],
+    [ "sevseg2:COM.2", "esp:GND.1", "black", [ "v-42.98", "h-115.2", "v164.02" ] ],
+    [ "sr1:Q0", "sevseg1:A", "gold", [ "v-18.4", "h83.84", "v-201.6", "h-44.28" ] ],
+    [ "sr1:Q1", "sevseg1:B", "gold", [ "v9.2", "h103.04", "v-249.6", "h-44.28" ] ],
+    [ "sr1:Q2", "sevseg1:C", "gold", [ "v57.2", "h74.24", "v-187.1", "h-28.8", "v-28.28" ] ],
+    [ "sr1:Q3", "sevseg1:D", "gold", [ "v18.8", "h-21.76", "v-148.7", "h32.52" ] ],
+    [ "sr1:Q4", "sevseg1:E", "gold", [ "v28.4", "h-40.96", "v-167.9", "h32.52" ] ],
+    [ "sr1:Q5", "sevseg1:F", "gold", [ "v38", "h-60.16", "v-288", "h51.72" ] ],
+    [ "sr1:Q6", "sevseg1:G", "gold", [ "v47.6", "h-79.36", "v-288", "h51.72" ] ],
+    [ "sr1:Q7", "sevseg1:DP", "gold", [ "v28.4", "h16.64", "v-167.9", "h-15.48" ] ],
+    [ "sr2:VCC", "sr1:VCC", "red", [ "v-28", "h179.84" ] ],
+    [ "sr1:VCC", "sr1:MR", "red", [ "v-32.7", "h50.44" ] ],
+    [ "esp:GND.1", "sr1:GND", "black", [ "h23.5", "v177.4", "h326.4" ] ],
+    [ "esp:GND.1", "sr1:OE", "black", [ "h23.5", "v62.2", "h288" ] ],
+    [ "esp:D21", "sr1:STCP", "purple", [ "h42.7", "v100.3", "h9.6" ] ],
+    [ "esp:D18", "sr1:SHCP", "blue", [ "h52.3", "v71.9", "h268.8" ] ],
+    [ "esp:GND.1", "sevseg1:COM.1", "black", [ "h23.5", "v-43.4", "h297.6" ] ],
+    [ "sevseg1:COM.2", "esp:GND.1", "black", [ "h1.28", "v-47.68", "h-297.6", "v168.2" ] ],
+    [ "sr2:DS", "sr1:Q7S", "green", [ "v-37.6", "h227.84" ] ],
+    [ "sr1:DS", "esp:D23", "green", [ "v-90.3", "h-237.56", "v-86.4" ] ]
   ],
   "dependencies": {}
 }
 ```
-
-> ⚠️ **Validar antes de publicar** — rode a Parte C e confirme a contagem de 00 a 20, com as **dezenas à esquerda** (`sevseg2`) e as **unidades à direita** (`sevseg1`). Os fios são desenhados em linha reta; arraste os componentes e os fios no editor do Wokwi para organizar.
-
 > 💡 No Wokwi os resistores dos segmentos foram omitidos para simplificar o desenho. Na bancada eles são **obrigatórios**.
 
 ---
