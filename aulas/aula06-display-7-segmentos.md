@@ -413,7 +413,8 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 
     [ "r7:2", "sevseg1:C", "green", [ "h18", "v-105.6", "h-163.2" ] ]
   ],
   "dependencies": {}
-}```
+}
+```
 
 > ⚠️ **Validar antes de publicar** — rode a Parte A e confirme a contagem de 0 a 9. Os fios são desenhados em linha reta; arraste-os no editor do Wokwi para organizar.
 
