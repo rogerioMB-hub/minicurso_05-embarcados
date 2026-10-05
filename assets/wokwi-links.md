@@ -18,7 +18,7 @@ title: "Referências e Links Wokwi"
 
 ## Mapeamento de pinos por aula
 
-### ESP32 (principal)
+### Seção 1 — ESP32 (principal)
 
 | Função | GPIO | Aulas |
 |--------|:----:|-------|
@@ -26,7 +26,7 @@ title: "Referências e Links Wokwi"
 | Anel NeoPixel — VCC | 5 V (hardware real) | 1, 2, 3, 4, 5 |
 | Anel NeoPixel — GND | GND | 1, 2, 3, 4, 5 |
 
-### Raspberry Pi Pico (alternativa)
+### Seção 1 — Raspberry Pi Pico (alternativa)
 
 | Função | GPIO |
 |--------|:----:|
@@ -37,18 +37,37 @@ title: "Referências e Links Wokwi"
 > Para o Pico, selecione **Raspberry Pi Pico** ao criar o projeto no Wokwi.
 > No código, troque `PINO_DADOS = 4` por `PINO_DADOS = 0` (linha marcada com `# Pico:`).
 
+
+### Seção 2 — Aula 6: display de 7 segmentos (catodo comum)
+
+| Segmento | a | b | c | d | e | f | g | dp | COM |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| ESP32 | 23 | 22 | 21 | 19 | 18 | 25 | 26 | 27 | GND |
+| Pico | GP0 | GP1 | GP2 | GP3 | GP4 | GP5 | GP6 | GP7 | GND |
+
+### Seção 2 — Aula 7: 74HC595 em cascata
+
+| Sinal | 74HC595 | ESP32 | Pico |
+|---|---|:-:|:-:|
+| Dados | U1 · DS | 23 | GP19 |
+| Clock | U1 e U2 · SHCP | 18 | GP18 |
+| Latch | U1 e U2 · STCP | 21 | GP17 |
+| Cascata | U1 · Q7S → U2 · DS | — | — |
+| OE / MR / VCC | GND / 3,3 V / 3,3 V | — | — |
+
+> Todos os GPIOs da Seção 2 no ESP32 evitam pinos de boot (0, 2, 5, 12, 15), da memória flash (6–11), da PSRAM em módulos WROVER (16, 17) e os somente-entrada (34–39).
+
 ---
 
-## Circuito — diagram.json (válido para todas as aulas)
+## Seção 1 — Circuito NeoPixel (diagram.json válido para as Aulas 1 a 5)
 
-> **Atenção:** o `diagram.json` abaixo é o circuito base de todo o mini-curso.
 > O mesmo arquivo é reutilizado da Aula 1 à Aula 5 — nenhuma alteração necessária.
-> Valide no Wokwi antes de publicar: execute a Parte A da Aula 1 e confirme que o LED 0 acende em vermelho.
+> ✅ Circuito validado — é o mesmo do projeto [wokwi.com/projects/474715111472158721](https://wokwi.com/projects/474715111472158721).
 
 ```json
 {
   "version": 1,
-  "author": "RMB - Mini Curso Embarcados 05",
+  "author": "Uri Shaked",
   "editor": "wokwi",
   "parts": [
     {
@@ -56,23 +75,37 @@ title: "Referências e Links Wokwi"
       "id": "esp",
       "top": 0,
       "left": 0,
-      "attrs": {}
+      "attrs": { "env": "micropython-20220117-v1.18" }
     },
     {
-      "type": "wokwi-neopixel-ring",
+      "type": "wokwi-led-ring",
       "id": "ring1",
-      "top": 80,
-      "left": 220,
-      "attrs": { "pixels": "16" }
+      "top": -25,
+      "left": 125,
+      "attrs": { "pixels": "16", "background": "black" }
     }
   ],
   "connections": [
-    [ "ring1:DIN", "esp:4",   "green", [] ],
-    [ "ring1:VCC", "esp:3V3", "red",   [] ],
-    [ "ring1:GND", "esp:GND", "black", [] ]
-  ]
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "ring1:DIN", "esp:D4", "green", [ "v6.44", "h-56.61", "v-14.4" ] ],
+    [ "ring1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "ring1:GND", "esp:GND.1", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
 }
 ```
+
+---
+
+## Seção 2 — Circuitos
+
+O `diagram.json` completo de cada aula está na própria aula, na seção **4. Circuito Wokwi**:
+
+- [Aula 6 — um display de 7 segmentos](https://rogeriomb-hub.github.io/minicurso_05-embarcados/aulas/aula06-display-7-segmentos) (`wokwi-esp32-devkit-v1` + `wokwi-7segment`)
+- [Aula 7 — dois 74HC595 e dois displays](https://rogeriomb-hub.github.io/minicurso_05-embarcados/aulas/aula07-registrador-74hc595) (`wokwi-esp32-devkit-v1` + 2 × `wokwi-74hc595` + 2 × `wokwi-7segment`)
+
+> ⚠️ **Validar antes de publicar** — os dois circuitos foram conferidos pino a pino, mas ainda precisam ser abertos no Wokwi e salvos como projeto; depois substitua os "a criar" da tabela abaixo pelos links reais.
 
 ---
 
@@ -88,8 +121,11 @@ title: "Referências e Links Wokwi"
 | 3 | Paleta com Dicionário | mesmo projeto da Aula 1 |
 | 4 | Efeitos Animados | mesmo projeto da Aula 1 |
 | 5 | Meteoro, Respiração e Cometa | mesmo projeto da Aula 1 |
+| 05-extra | Codificadores e Decodificadores | — (sem circuito, só terminal) |
+| 6 | Display de 7 Segmentos | a criar — `diagram.json` da Aula 6 |
+| 7 | Registrador 74HC595 | a criar — `diagram.json` da Aula 7 |
 
-> Como todas as aulas usam o mesmo circuito, um único projeto Wokwi é suficiente para todo o mini-curso.
+> Na Seção 1 todas as aulas usam o mesmo circuito, então um único projeto Wokwi basta. Na Seção 2 são dois projetos: um para a Aula 6 e outro para a Aula 7.
 
 ---
 
@@ -101,6 +137,9 @@ title: "Referências e Links Wokwi"
 | Brilho máximo com muitos LEDs | Consumo elevado | No Wokwi sem limitação; em hardware real, limitar brilho ou usar fonte dedicada |
 | Circuitos gerados automaticamente | Conexões frequentemente incompletas | Validar no Wokwi antes de publicar |
 | `input()` no terminal Wokwi | Funciona normalmente | Use para a Aula 3 (bônus com input interativo) |
+| Display de 7 segmentos | O padrão do `wokwi-7segment` é **anodo** comum | Use `"common": "cathode"` nos `attrs` (já presente nos circuitos da Seção 2) |
+| Resistores dos segmentos | Wokwi não queima LEDs | Omitidos no simulador; **obrigatórios** na bancada (330 Ω por segmento) |
+| Tensão do 74HC595 | Em 5 V exige ≥ 3,15 V na entrada | Alimente com 3,3 V junto do ESP32/Pico, ou use 74HCT595 em 5 V |
 
 ---
 
@@ -112,3 +151,7 @@ title: "Referências e Links Wokwi"
 - [Wokwi ESP32 + MicroPython](https://docs.wokwi.com/pt-BR/guides/micropython)
 - [Wokwi Raspberry Pi Pico](https://docs.wokwi.com/pt-BR/parts/wokwi-pi-pico)
 - [WS2812B Datasheet](https://cdn-shop.adafruit.com/datasheets/WS2812B.pdf)
+- [Wokwi — display de 7 segmentos](https://docs.wokwi.com/parts/wokwi-7segment) · [Wokwi — 74HC595](https://docs.wokwi.com/parts/wokwi-74hc595)
+- [Datasheet TI SN74HC595](https://www.ti.com/lit/ds/symlink/sn74hc595.pdf)
+- [Display catodo comum Kingbright SC56-11EWA](https://www.kingbrightusa.com/images/catalog/SPEC/SC56-11EWA.pdf) · [anodo comum SA56-11EWA](https://www.kingbrightusa.com/images/catalog/SPEC/SA56-11EWA.pdf)
+- [Decodificadores TI CD4511B](https://www.ti.com/lit/ds/symlink/cd4511b.pdf) · [SN74LS47](https://www.ti.com/lit/ds/symlink/sn74ls47.pdf)

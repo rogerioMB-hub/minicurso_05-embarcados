@@ -1,5 +1,5 @@
-title: "Sistemas Embarcados — LEDs RGB e Efeitos Visuais com ESP32"
-description: "Mini curso para o Curso Técnico em Automação Industrial. Controle de LEDs RGB WS2812B com MicroPython — efeitos, animações e paletas de cores."
+title: "Sistemas Embarcados — LEDs, Displays e Efeitos Visuais com ESP32"
+description: "Mini curso para o Curso Técnico em Automação Industrial. LEDs RGB WS2812B, displays de 7 segmentos e registrador 74HC595 com MicroPython — efeitos, animações, codificação e expansão de saídas."
 
 theme: jekyll-theme-cayman
 
@@ -15,6 +15,9 @@ header_pages:
   - aulas/aula03-paleta-dicionario.md
   - aulas/aula04-efeitos-animados.md
   - aulas/aula05-meteoro-respiracao-cometa.md
+  - aulas/aula05-extra-codificadores-decodificadores.md
+  - aulas/aula06-display-7-segmentos.md
+  - aulas/aula07-registrador-74hc595.md
 
 # Configurações gerais
 markdown: kramdown

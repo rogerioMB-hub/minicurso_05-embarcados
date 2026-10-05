@@ -370,4 +370,4 @@ while True:
 
 ---
 
-*← [Aula 4: Efeitos Animados](./aula04-efeitos-animados.md) | [Início](../index.md) →*
+*← [Aula 4: Efeitos Animados](./aula04-efeitos-animados.md) | Próxima → [Seção 2 · Aula 05-extra: Codificadores e Decodificadores](./aula05-extra-codificadores-decodificadores.md)*

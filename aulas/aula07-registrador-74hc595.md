@@ -1,0 +1,507 @@
+---
+layout: default
+title: "Aula 7 — Registrador de Deslocamento 74HC595"
+---
+
+# Aula 7 — Registrador de Deslocamento 74HC595
+
+> **Duração estimada:** 30 minutos + projeto final  
+> **Bloco:** 2 de 2 — Seção 2: Display de 7 Segmentos
+
+---
+
+## Objetivos
+
+Ao final desta aula você será capaz de:
+
+- Explicar o que é um **registrador de deslocamento** do tipo série → paralelo
+- Identificar os pinos do **74HC595** no datasheet e no Wokwi
+- Enviar um byte bit a bit usando **dado**, **clock** e **latch**
+- Ligar dois 74HC595 **em cascata** usando apenas 3 GPIOs
+- Separar um número em **dezena** e **unidade** com `//` e `%`
+- Montar um contador de **00 a 20** em dois displays de catodo comum
+
+> 💡 **Vem da Aula 6?** Esta aula usa a **Parte C** da aula anterior: a tupla `CODIGOS`, com um byte por dígito. Se ainda não fez, comece pela [Aula 6](./aula06-display-7-segmentos.md).
+
+---
+
+## 1. Conceito
+
+### O problema: pinos demais
+
+Na Aula 6, **um** dígito usou **8 GPIOs**. Para mostrar um número de dois dígitos seriam 16; para um relógio de quatro dígitos, 32 — mais do que o ESP32 tem livres.
+
+O **74HC595** resolve isso: com **3 GPIOs** ele controla 8 saídas, e vários 595 podem ser ligados **em cascata** usando os mesmos 3 GPIOs. Cada chip a mais acrescenta 8 saídas **sem custar nenhum pino** do microcontrolador.
+
+---
+
+### O que é o 74HC595
+
+É um **registrador de deslocamento** de 8 bits, do tipo **série → paralelo** (*Serial-In, Parallel-Out*, SIPO):
+
+- **série** na entrada: os bits chegam **um de cada vez**, por um único fio;
+- **paralelo** na saída: os 8 bits aparecem **todos juntos**, em 8 pinos.
+
+Dentro dele há **dois blocos** de 8 bits:
+
+1. **Registrador de deslocamento** — a cada pulso de **clock**, recebe um bit novo na primeira posição e empurra os outros uma posição adiante. O bit que sai da última posição vai para o pino **Q7S**, que serve para alimentar o próximo 595.
+2. **Registrador de armazenamento** (*latch*) — copia os 8 bits do primeiro bloco **somente quando recebe um pulso no pino de latch**. São as saídas dele que ligam o display.
+
+Esse segundo bloco é o que impede o display de "piscar": enquanto os bits estão andando no primeiro bloco, as saídas continuam mostrando o valor antigo. Só no pulso de latch o display troca, de uma vez.
+
+> 📖 **Saiba mais — comunicação serial com clock:** um fio de dados e um fio de clock que diz *quando* ler cada bit é a mesma ideia do barramento **SPI**, usado pelo display TFT do Mini-curso 04. Por isso o 595 também pode ser comandado pela SPI de hardware (veja o desafio bônus). → [Mini-curso 04 · Aula 1: Fundamentos do SPI](https://rogeriomb-hub.github.io/minicurso_04-embarcados/aulas/aula01-fundamentos-spi)
+>
+> Compare com a **UART**, que é serial **sem** fio de clock: os dois lados combinam a velocidade antes. → [Mini-curso 01 · Aula 7: UART](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula07-uart-primeiros-bytes)
+
+---
+
+### Pinagem: datasheet × Wokwi
+
+Os fabricantes usam nomes diferentes para os mesmos pinos. A tabela relaciona o [datasheet da Texas Instruments (SN74HC595)](https://www.ti.com/lit/ds/symlink/sn74hc595.pdf) com os nomes do [componente do Wokwi](https://docs.wokwi.com/parts/wokwi-74hc595):
+
+| Pino (DIP-16) | Nome TI | Nome Wokwi | Função | Ligação |
+|:---:|---|---|---|---|
+| 14 | SER | **DS** | entrada de dados serial | GPIO de dados |
+| 11 | SRCLK | **SHCP** | clock do deslocamento (borda de subida) | GPIO de clock |
+| 12 | RCLK | **STCP** | clock do armazenamento — **latch** (borda de subida) | GPIO de latch |
+| 13 | OE | OE | habilita as saídas — ativo em **0** | GND (sempre habilitado) |
+| 10 | SRCLR | MR | limpa o registrador — ativo em **0** | VCC (nunca limpa) |
+| 15, 1–7 | QA, QB … QH | Q0, Q1 … Q7 | saídas paralelas | segmentos a … g, dp |
+| 9 | QH′ | **Q7S** | saída serial para a cascata | DS do próximo 595 |
+| 16 | VCC | VCC | alimentação | 3,3 V |
+| 8 | GND | GND | terra | GND |
+
+> 💡 **OE e MR têm "barra" em cima no datasheet** (`OE̅`, `SRCLR̅`): isso indica que são **ativos em nível baixo**. Por isso OE vai ao GND (saídas sempre ligadas) e MR vai ao VCC (o registrador nunca é limpo).
+
+---
+
+### Figura e diagrama de blocos do deslocamento
+
+O diagrama abaixo mostra o sistema completo desta aula: o ESP32 envia os bits para **U1**; quando um bit passa da última posição de U1, ele segue por **Q7S** para **U2**. Os sinais de clock (SHCP) e de latch (STCP) são **compartilhados** pelos dois chips.
+
+![Diagrama de blocos: ESP32 ligado ao 74HC595 U1, que se liga ao U2 pela saída Q7S; cada 595 aciona um display](../assets/diagrama_blocos_74hc595_cascata.svg)
+
+**Consequência importante:** o **primeiro byte enviado vai mais longe**. Com dois chips em cascata e 16 pulsos de clock, o primeiro byte atravessa U1 e termina em U2; o segundo byte fica em U1.
+
+---
+
+### O deslocamento, pulso a pulso
+
+Vamos acompanhar o dígito **2** (`0x5B = 0101 1011`) entrando em um 595. Os bits são enviados **do bit 7 para o bit 0**, para que, ao final, o bit 0 (segmento **a**) esteja em Q0.
+
+![Diagrama de tempo: sinais DS, SHCP e STCP enviando o byte 0x5B, com o conteúdo do registrador após cada pulso](../assets/deslocamento_byte_0x5B.svg)
+
+| Pulso em SHCP | Bit colocado em DS | Registrador (Q7 … Q0) | Display |
+|:---:|---|:---:|---|
+| 1 | 0 — bit 7 (dp) | `·······0` | sem mudança |
+| 2 | 1 — bit 6 (g) | `······01` | sem mudança |
+| 3 | 0 — bit 5 (f) | `·····010` | sem mudança |
+| 4 | 1 — bit 4 (e) | `····0101` | sem mudança |
+| 5 | 1 — bit 3 (d) | `···01011` | sem mudança |
+| 6 | 0 — bit 2 (c) | `··010110` | sem mudança |
+| 7 | 1 — bit 1 (b) | `·0101101` | sem mudança |
+| 8 | 1 — bit 0 (a) | `01011011` | sem mudança |
+| **pulso em STCP** | — | `01011011` | **mostra "2"** |
+
+O ponto `·` representa os bits antigos que ainda estão saindo pela outra ponta. Repare que cada pulso faz com o registrador exatamente o que `(registro << 1) | bit` faz com um número em Python.
+
+> 📖 **Saiba mais — deslocamento de bits:** `<<` empurra todos os bits uma posição para a esquerda e coloca `0` à direita; o `| bit` coloca o bit novo nessa posição. É o mesmo "LED caminhando" do sequenciador do Mini-curso 01, agora acontecendo dentro de um chip. → [Mini-curso 01 · Aula 4: Deslocamento e escrita direta em porta](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula04-deslocamento-escrita-porta)
+
+---
+
+### A sequência para enviar um byte
+
+Para cada um dos 8 bits, do bit 7 ao bit 0:
+
+1. coloque o bit no pino **DS** (`0` ou `1`);
+2. dê um **pulso** em **SHCP** (sobe para `1` e volta a `0`) — o bit entra e os outros andam.
+
+Depois do último bit:
+
+3. dê um **pulso** em **STCP** — o display mostra o novo valor.
+
+Em código, a extração de cada bit usa a mesma máscara da Aula 6: `(valor >> i) & 1`.
+
+---
+
+## 2. Circuito
+
+### Ligações
+
+| Sinal | 74HC595 | ESP32 | Pico |
+|---|---|:---:|:---:|
+| Dados | U1 · DS | GPIO23 | GP19 |
+| Clock | U1 · SHCP **e** U2 · SHCP | GPIO18 | GP18 |
+| Latch | U1 · STCP **e** U2 · STCP | GPIO21 | GP17 |
+| Cascata | U1 · Q7S → U2 · DS | — | — |
+| Habilita saídas | OE dos dois → GND | GND | GND |
+| Reset | MR dos dois → 3,3 V | 3V3 | 3V3(OUT) |
+| Alimentação | VCC dos dois → 3,3 V | 3V3 | 3V3(OUT) |
+
+| Saída do 595 | Q0 | Q1 | Q2 | Q3 | Q4 | Q5 | Q6 | Q7 |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Segmento | a | b | c | d | e | f | g | dp |
+
+- **U1** (o 595 ligado ao ESP32) aciona o display da **direita — UNIDADES**
+- **U2** (o segundo da cascata) aciona o display da **esquerda — DEZENAS**
+- Os dois displays são de **catodo comum**, com COM no GND
+- Na bancada: um resistor de **330 Ω** entre cada saída Q e o segmento (16 resistores no total)
+
+> ✅ **Por que esses GPIOs?**
+> - **GPIO23 e GPIO18** são os pinos **MOSI** e **SCK** da SPI de hardware do ESP32 (VSPI); **GP19 e GP18** são **TX** e **SCK** da SPI0 do Pico. Assim o mesmo circuito funciona com o desafio bônus de SPI.
+> - **GPIO21** é de uso geral. Evitamos o GPIO5 (sugestão comum em tutoriais) porque ele é **pino de boot** do ESP32 e oscila durante a inicialização, o que daria um pulso de latch falso.
+
+> ⚠️ **Tensão de alimentação do 595 — 3,3 V, não 5 V.** O 74HC595 funciona de 2 V a 6 V. Alimentado com 5 V, ele só reconhece como nível alto uma entrada a partir de **3,15 V**, e o ESP32/Pico entregam 3,3 V: fica no limite e pode falhar na bancada. Alimente o 595 com **3,3 V**, junto do microcontrolador. Se for obrigatório usar 5 V, troque pelo **74HCT595**, que aceita 3,3 V como nível alto.
+
+> ⚠️ **Corrente:** o datasheet garante ±6 mA por saída com 4,5 V de alimentação e limita o chip inteiro a **70 mA**. Em 3,3 V a saída fornece um pouco menos, então o segmento fica um pouco menos brilhante. Com 330 Ω cada segmento consome cerca de 4 mA e 8 segmentos acesos ficam perto de 34 mA por chip — dentro do limite. Se o brilho ficar fraco na bancada, use 220 Ω (cerca de 6 mA por segmento, ainda abaixo dos 70 mA do chip).
+
+> 💡 **Capacitor de desacoplamento:** na bancada, coloque um capacitor cerâmico de **100 nF** entre VCC e GND de cada 595, o mais perto possível do chip (recomendação do datasheet).
+
+---
+
+## 3. Código
+
+As três partes usam **o mesmo circuito** (dois 595 e dois displays).
+
+> 📖 **Saiba mais — `for` com `range()` decrescente:** `range(7, -1, -1)` gera 7, 6, 5, 4, 3, 2, 1, 0 — começa em 7, para **antes** de −1 e anda de −1 em −1. → [Mini-curso 01 · Extra: for e range()](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula02-extra-for-range)
+
+### Parte A — Enviar um byte: contador de 0 a 9
+
+Primeiro, só um dígito. A função `enviar_byte()` faz os passos 1 e 2 para os 8 bits; o pulso de latch vem depois.
+
+```python
+# ============================================================
+# Aula 07 — Parte A: enviar um byte ao 74HC595
+# Mini-curso 05 — Seção 2: Display de 7 Segmentos
+# Plataforma principal: ESP32 · displays de CATODO COMUM
+# ============================================================
+
+from machine import Pin
+import utime
+
+# --- 3 pinos para o 74HC595 (começam em 0) ---
+ds   = Pin(23, Pin.OUT, value=0)   # DS   — dados
+shcp = Pin(18, Pin.OUT, value=0)   # SHCP — clock do deslocamento
+stcp = Pin(21, Pin.OUT, value=0)   # STCP — latch
+# Pico: ds = Pin(19, ...)  shcp = Pin(18, ...)  stcp = Pin(17, ...)
+
+# --- mesma tupla da Aula 6, Parte C (bits: dp g f e d c b a) ---
+CODIGOS = (0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F)
+
+def pulso(pino):
+    """Sobe o pino para 1 e volta para 0: uma borda de subida."""
+    pino.value(1)
+    pino.value(0)
+
+def enviar_byte(valor):
+    """Envia os 8 bits de valor, do bit 7 (dp) ao bit 0 (a)."""
+    for i in range(7, -1, -1):
+        ds.value((valor >> i) & 1)     # passo 1: coloca o bit em DS
+        pulso(shcp)                    # passo 2: o bit entra, os outros andam
+
+def mostrar_digito(n):
+    enviar_byte(CODIGOS[n])
+    pulso(stcp)                        # passo 3: o display troca de uma vez
+
+# --- Contagem de 0 a 9 no display das UNIDADES ---
+while True:
+    for n in range(10):
+        print("Dígito:", n)
+        mostrar_digito(n)
+        utime.sleep(1)
+```
+
+> 🔍 **Observe o display das dezenas** enquanto a Parte A roda. Ele não está "desligado" — responda no Experimento o que ele mostra e por quê.
+
+---
+
+### Parte B — Câmera lenta: ver os bits andando
+
+Esta parte desacelera tudo: dá um pulso de latch **depois de cada bit**, para você ver no display o deslocamento acontecendo, e imprime no terminal uma cópia do registrador.
+
+```python
+# ============================================================
+# Aula 07 — Parte B: deslocamento em câmera lenta
+# ============================================================
+
+from machine import Pin
+import utime
+
+ds   = Pin(23, Pin.OUT, value=0)   # Pico: Pin(19, ...)
+shcp = Pin(18, Pin.OUT, value=0)   # Pico: Pin(18, ...)
+stcp = Pin(21, Pin.OUT, value=0)   # Pico: Pin(17, ...)
+
+def pulso(pino):
+    pino.value(1)
+    pino.value(0)
+
+registro = 0      # cópia, no programa, do que está dentro de U1
+
+def enviar_bit_lento(bit):
+    global registro
+    ds.value(bit)
+    pulso(shcp)                                   # o bit entra no 595...
+    registro = ((registro << 1) | bit) & 0xFF     # ...e na nossa cópia
+    pulso(stcp)                                   # latch a cada bit: só para VER
+    print("entrou {}  →  Q7..Q0 = {:08b}".format(bit, registro))
+    utime.sleep(1)
+
+# --- envia o dígito 2 (0x5B), um bit por segundo ---
+VALOR = 0x5B
+print("Enviando {:08b} (dígito 2), do bit 7 ao bit 0".format(VALOR))
+for i in range(7, -1, -1):
+    enviar_bit_lento((VALOR >> i) & 1)
+print("Pronto: o display das unidades mostra o 2.")
+```
+
+> 💡 **Compare o terminal com a tabela "O deslocamento, pulso a pulso"** do Conceito. Cada linha impressa é uma linha da tabela.
+
+---
+
+### Separando dezena e unidade
+
+Para mostrar um número de dois dígitos, cada display precisa do **seu** dígito. Dois operadores resolvem isso:
+
+```python
+n = 17
+dezena  = n // 10    # divisão inteira: quantas dezenas cabem → 1
+unidade = n % 10     # resto da divisão por 10              → 7
+```
+
+| `n` | `n // 10` | `n % 10` | Display |
+|:---:|:---:|:---:|:---:|
+| 5 | 0 | 5 | `05` |
+| 17 | 1 | 7 | `17` |
+| 20 | 2 | 0 | `20` |
+
+> 📖 **Saiba mais:** `//` já foi usado no cálculo de brilho da [Aula 4](./aula04-efeitos-animados.md) e `%` para "dar a volta" no anel da [Aula 2](./aula02-efeitos-lista.md). Aqui os dois juntos fazem o papel do **codificador BCD** da [Aula 05-extra](./aula05-extra-codificadores-decodificadores.md): separam o número em um dígito por display.
+
+---
+
+### Parte C — Aplicação final: contagem de 00 a 20
+
+```python
+# ============================================================
+# Aula 07 — Parte C: contador 00 a 20 com dois 74HC595
+# Mini-curso 05 — Seção 2: Display de 7 Segmentos
+# Plataforma principal: ESP32 · displays de CATODO COMUM
+#   U1 (ligado ao ESP32)  → display das UNIDADES (direita)
+#   U2 (Q7S de U1 → DS)   → display das DEZENAS  (esquerda)
+# ============================================================
+
+from machine import Pin
+import utime
+
+ds   = Pin(23, Pin.OUT, value=0)   # DS   — dados
+shcp = Pin(18, Pin.OUT, value=0)   # SHCP — clock (U1 e U2)
+stcp = Pin(21, Pin.OUT, value=0)   # STCP — latch (U1 e U2)
+# Pico: ds = Pin(19, ...)  shcp = Pin(18, ...)  stcp = Pin(17, ...)
+
+CODIGOS = (0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F)
+
+def pulso(pino):
+    pino.value(1)
+    pino.value(0)
+
+def enviar_byte(valor):
+    for i in range(7, -1, -1):
+        ds.value((valor >> i) & 1)
+        pulso(shcp)
+
+def mostrar_numero(n):
+    """Mostra n (0 a 99) nos dois displays."""
+    dezena  = n // 10
+    unidade = n % 10
+    enviar_byte(CODIGOS[dezena])    # 1º byte: atravessa U1 e termina em U2
+    enviar_byte(CODIGOS[unidade])   # 2º byte: fica em U1
+    pulso(stcp)                     # os dois displays trocam juntos
+
+# --- Contagem de 00 a 20, recomeçando ---
+while True:
+    for n in range(21):
+        print("Número: {:02d}".format(n))
+        mostrar_numero(n)
+        utime.sleep(0.5)
+```
+
+> 💡 **Conta de pinos:** 2 displays × 8 segmentos = **16 saídas** usando **3 GPIOs**. Um terceiro 595 em cascata daria 24 saídas — com os mesmos 3 GPIOs.
+
+---
+
+## 4. Circuito Wokwi — diagram.json
+
+Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 + MicroPython**). O mesmo circuito serve para as Partes A, B e C.
+
+```json
+{
+  "version": 1,
+  "author": "RMB - Mini Curso Embarcados 05",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "wokwi-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": { "env": "micropython-20220117-v1.18" }
+    },
+    { "type": "wokwi-74hc595", "id": "sr1", "top": 220, "left": 380, "attrs": {} },
+    { "type": "wokwi-74hc595", "id": "sr2", "top": 220, "left": 200, "attrs": {} },
+    {
+      "type": "wokwi-7segment",
+      "id": "sevseg1",
+      "top": 20,
+      "left": 400,
+      "attrs": { "common": "cathode", "color": "red" }
+    },
+    {
+      "type": "wokwi-7segment",
+      "id": "sevseg2",
+      "top": 20,
+      "left": 220,
+      "attrs": { "common": "cathode", "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+
+    [ "sr1:DS",   "esp:D23",   "green",  [] ],
+    [ "sr1:SHCP", "esp:D18",   "blue",   [] ],
+    [ "sr2:SHCP", "esp:D18",   "blue",   [] ],
+    [ "sr1:STCP", "esp:D21",   "purple", [] ],
+    [ "sr2:STCP", "esp:D21",   "purple", [] ],
+    [ "sr1:Q7S",  "sr2:DS",    "green",  [] ],
+
+    [ "sr1:VCC",  "esp:3V3",   "red",    [] ],
+    [ "sr2:VCC",  "esp:3V3",   "red",    [] ],
+    [ "sr1:MR",   "esp:3V3",   "red",    [] ],
+    [ "sr2:MR",   "esp:3V3",   "red",    [] ],
+    [ "sr1:GND",  "esp:GND.1", "black",  [] ],
+    [ "sr2:GND",  "esp:GND.1", "black",  [] ],
+    [ "sr1:OE",   "esp:GND.1", "black",  [] ],
+    [ "sr2:OE",   "esp:GND.1", "black",  [] ],
+
+    [ "sr1:Q0", "sevseg1:A",  "orange", [] ],
+    [ "sr1:Q1", "sevseg1:B",  "orange", [] ],
+    [ "sr1:Q2", "sevseg1:C",  "orange", [] ],
+    [ "sr1:Q3", "sevseg1:D",  "orange", [] ],
+    [ "sr1:Q4", "sevseg1:E",  "orange", [] ],
+    [ "sr1:Q5", "sevseg1:F",  "orange", [] ],
+    [ "sr1:Q6", "sevseg1:G",  "orange", [] ],
+    [ "sr1:Q7", "sevseg1:DP", "orange", [] ],
+    [ "sevseg1:COM.1", "esp:GND.1", "black", [] ],
+    [ "sevseg1:COM.2", "esp:GND.1", "black", [] ],
+
+    [ "sr2:Q0", "sevseg2:A",  "gold", [] ],
+    [ "sr2:Q1", "sevseg2:B",  "gold", [] ],
+    [ "sr2:Q2", "sevseg2:C",  "gold", [] ],
+    [ "sr2:Q3", "sevseg2:D",  "gold", [] ],
+    [ "sr2:Q4", "sevseg2:E",  "gold", [] ],
+    [ "sr2:Q5", "sevseg2:F",  "gold", [] ],
+    [ "sr2:Q6", "sevseg2:G",  "gold", [] ],
+    [ "sr2:Q7", "sevseg2:DP", "gold", [] ],
+    [ "sevseg2:COM.1", "esp:GND.1", "black", [] ],
+    [ "sevseg2:COM.2", "esp:GND.1", "black", [] ]
+  ],
+  "dependencies": {}
+}
+```
+
+> ⚠️ **Validar antes de publicar** — rode a Parte C e confirme a contagem de 00 a 20, com as **dezenas à esquerda** (`sevseg2`) e as **unidades à direita** (`sevseg1`). Os fios são desenhados em linha reta; arraste os componentes e os fios no editor do Wokwi para organizar.
+
+> 💡 No Wokwi os resistores dos segmentos foram omitidos para simplificar o desenho. Na bancada eles são **obrigatórios**.
+
+---
+
+## 5. Experimento
+
+Execute a **Parte A** e responda:
+
+**a)** O que aparece no display das **dezenas** enquanto a Parte A conta de 0 a 9? Por que ele mostra isso, se o programa nunca enviou nada "para as dezenas"?
+
+> _________________________________________________________________  
+> _________________________________________________________________
+
+**b)** Comente a linha `pulso(stcp)` na função `mostrar_digito()` e rode de novo. Os displays mudam? Qual bloco interno do 595 deixou de receber a cópia dos bits?
+
+> _________________________________________________________________
+
+Execute a **Parte B**:
+
+**c)** Complete a coluna que falta, conferindo com o terminal:
+
+| Pulso | Bit enviado | `registro` em binário |
+|:---:|:---:|:---:|
+| 1 | `0` | `00000000` |
+| 2 | `1` | `________` |
+| 3 | `0` | `________` |
+| 8 | `1` | `________` |
+
+Execute a **Parte C**:
+
+**d)** Troque a ordem das duas chamadas de `enviar_byte()` dentro de `mostrar_numero()`. O que acontece com o número 17? Explique usando a frase "o primeiro byte enviado vai mais longe".
+
+> _________________________________________________________________
+
+**e)** Quantos GPIOs seriam necessários para **4 displays**:
+
+- ligando cada segmento direto no ESP32, como na Aula 6? _____
+- usando 74HC595 em cascata? _____
+
+---
+
+## 6. Desafio
+
+**Desafio principal — apagar o zero à esquerda:** em um painel de verdade, o número 7 aparece como ` 7`, e não como `07`. Altere `mostrar_numero()` para **apagar o display das dezenas** quando a dezena for zero. Dica: o byte que apaga todos os segmentos é `0x00`.
+
+```python
+def mostrar_numero(n):
+    dezena  = n // 10
+    unidade = n % 10
+    if dezena == _____:
+        enviar_byte(_____)              # dezenas apagadas
+    else:
+        enviar_byte(CODIGOS[dezena])
+    enviar_byte(CODIGOS[unidade])
+    pulso(stcp)
+```
+
+**Desafio bônus — usar a SPI de hardware:** os pinos de dados e de clock foram escolhidos para coincidir com a SPI do microcontrolador. Substitua a função `enviar_byte()` pelo periférico SPI, que envia os bits sozinho, e compare com a versão bit a bit:
+
+```python
+from machine import SPI
+
+spi = SPI(2, baudrate=1000000, polarity=0, phase=0,
+          sck=Pin(18), mosi=Pin(23), miso=Pin(19))
+# Pico: spi = SPI(0, baudrate=1000000, polarity=0, phase=0,
+#                 sck=Pin(18), mosi=Pin(19), miso=Pin(16))
+
+def mostrar_numero(n):
+    spi.write(bytes([CODIGOS[_____], CODIGOS[_____]]))   # dezena primeiro
+    pulso(stcp)
+```
+
+> 💡 Ao criar a SPI, o pino de dados passa a ser controlado pelo periférico: **não** crie o `Pin(23, Pin.OUT)` (no Pico, `Pin(19, ...)`) neste programa. Os pinos de clock e de latch continuam iguais.
+
+---
+
+## Resumo da aula
+
+- O **74HC595** é um registrador de deslocamento **série → paralelo**: entra 1 bit por vez, saem 8 bits juntos
+- **DS** recebe o bit, **SHCP** empurra os bits a cada pulso, **STCP** (latch) copia tudo para as saídas de uma vez
+- O latch evita que o display mostre os bits "andando"
+- **Q7S** liga um 595 ao próximo: com **3 GPIOs** controlamos 8, 16, 24… saídas
+- Na cascata, **o primeiro byte enviado vai mais longe** — por isso enviamos a dezena antes da unidade
+- `n // 10` dá a dezena e `n % 10` dá a unidade
+- Alimente o 74HC595 com **3,3 V** junto do ESP32/Pico (ou use o 74HCT595 em 5 V)
+
+### Referências
+
+- [Datasheet TI SN74HC595](https://www.ti.com/lit/ds/symlink/sn74hc595.pdf) — pinagem, tabela de funções e diagrama de tempo
+- [Wokwi — 74HC595](https://docs.wokwi.com/parts/wokwi-74hc595) · [Wokwi — display de 7 segmentos](https://docs.wokwi.com/parts/wokwi-7segment)
+- [Documentação MicroPython — machine.SPI](https://docs.micropython.org/en/latest/library/machine.SPI.html)
+
+---
+
+*← [Aula 6: Display de 7 Segmentos](./aula06-display-7-segmentos.md) | [Início](../index.md) →*
