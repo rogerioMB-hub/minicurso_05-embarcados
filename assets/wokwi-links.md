@@ -122,7 +122,7 @@ O `diagram.json` completo de cada aula está na própria aula, na seção **4. C
 | 4 | Efeitos Animados | mesmo projeto da Aula 1 |
 | 5 | Meteoro, Respiração e Cometa | mesmo projeto da Aula 1 |
 | 05-extra | Codificadores e Decodificadores | — (sem circuito, só terminal) |
-| 6 | Display de 7 Segmentos | a criar — `diagram.json` da Aula 6 |
+| 6 | Display de 7 Segmentos | [https://wokwi.com/projects/477072108509827073](https://wokwi.com/projects/477072108509827073)] |
 | 7 | Registrador 74HC595 | a criar — `diagram.json` da Aula 7 |
 
 > Na Seção 1 todas as aulas usam o mesmo circuito, então um único projeto Wokwi basta. Na Seção 2 são dois projetos: um para a Aula 6 e outro para a Aula 7.
