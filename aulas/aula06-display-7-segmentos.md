@@ -326,41 +326,94 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 
 ```json
 {
   "version": 1,
-  "author": "RMB - Mini Curso Embarcados 05",
+  "author": "Rogerio M B",
   "editor": "wokwi",
   "parts": [
     {
-      "type": "wokwi-esp32-devkit-v1",
+      "type": "board-esp32-devkit-c-v4",
       "id": "esp",
-      "top": 0,
-      "left": 0,
-      "attrs": { "env": "micropython-20220117-v1.18" }
+      "top": 115.2,
+      "left": -4.76,
+      "attrs": { "env": "micropython-20260406-v1.28.0" }
     },
     {
       "type": "wokwi-7segment",
       "id": "sevseg1",
-      "top": -10,
-      "left": 220,
-      "attrs": { "common": "cathode", "color": "red" }
+      "top": 4.98,
+      "left": 24.28,
+      "attrs": { "common": "cathode" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": -15.25,
+      "left": -57.6,
+      "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": -24.85,
+      "left": -57.6,
+      "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": -15.25,
+      "left": 115.2,
+      "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r4",
+      "top": -24.85,
+      "left": 115.2,
+      "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r5",
+      "top": 215.15,
+      "left": 144,
+      "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r6",
+      "top": 205.55,
+      "left": 144,
+      "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r7",
+      "top": 186.35,
+      "left": 144,
+      "attrs": { "value": "330" }
     }
   ],
   "connections": [
-    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
-    [ "sevseg1:A",     "esp:D23",   "green",  [] ],
-    [ "sevseg1:B",     "esp:D22",   "green",  [] ],
-    [ "sevseg1:C",     "esp:D21",   "green",  [] ],
-    [ "sevseg1:D",     "esp:D19",   "green",  [] ],
-    [ "sevseg1:E",     "esp:D18",   "green",  [] ],
-    [ "sevseg1:F",     "esp:D25",   "orange", [] ],
-    [ "sevseg1:G",     "esp:D26",   "orange", [] ],
-    [ "sevseg1:DP",    "esp:D27",   "orange", [] ],
-    [ "sevseg1:COM.1", "esp:GND.1", "black",  [] ],
-    [ "sevseg1:COM.2", "esp:GND.1", "black",  [] ]
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.2", "sevseg1:COM.2", "black", [ "h115.2", "v-172.8", "h-163.2" ] ],
+    [ "esp:26", "r1:1", "green", [ "h-67.05", "v-240" ] ],
+    [ "r1:2", "sevseg1:G", "green", [ "v0", "h27.6" ] ],
+    [ "sevseg1:F", "r2:2", "green", [ "v0" ] ],
+    [ "r2:1", "esp:25", "green", [ "v0", "h-28.8", "v240" ] ],
+    [ "esp:22", "r4:2", "green", [ "h105.6", "v-182.4" ] ],
+    [ "r4:1", "sevseg1:B", "green", [ "v0", "h-48" ] ],
+    [ "esp:23", "r3:2", "green", [ "h96", "v-163.2" ] ],
+    [ "r3:1", "sevseg1:A", "green", [ "v0", "h-57.6" ] ],
+    [ "esp:18", "r5:1", "green", [ "h0" ] ],
+    [ "r5:2", "sevseg1:E", "green", [ "h37.2", "v-115.2", "h-211.2" ] ],
+    [ "sevseg1:D", "r6:2", "green", [ "v19.2", "h192", "v115.2" ] ],
+    [ "r6:1", "esp:19", "green", [ "v0" ] ],
+    [ "esp:21", "r7:1", "green", [ "h0" ] ],
+    [ "r7:2", "sevseg1:C", "green", [ "h18", "v-105.6", "h-163.2" ] ]
   ],
   "dependencies": {}
-}
-```
+}```
 
 > ⚠️ **Validar antes de publicar** — rode a Parte A e confirme a contagem de 0 a 9. Os fios são desenhados em linha reta; arraste-os no editor do Wokwi para organizar.
 
