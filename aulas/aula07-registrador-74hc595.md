@@ -20,6 +20,7 @@ Ao final desta aula você será capaz de:
 - Ligar dois 74HC595 **em cascata** usando apenas 3 GPIOs
 - Separar um número em **dezena** e **unidade** com `//` e `%`
 - Montar um contador de **00 a 20** em dois displays de catodo comum
+- Explicar o **terceiro estado** (alta impedância) e usar o pino **OE** para apagar o display sem perder os dados
 
 > 💡 **Vem da Aula 6?** Esta aula usa a **Parte C** da aula anterior: a tupla `CODIGOS`, com um byte por dígito. Se ainda não fez, comece pela [Aula 6](./aula06-display-7-segmentos.md).
 
@@ -64,7 +65,7 @@ Os fabricantes usam nomes diferentes para os mesmos pinos. A tabela relaciona o 
 | 14 | SER | **DS** | entrada de dados serial | GPIO de dados |
 | 11 | SRCLK | **SHCP** | clock do deslocamento (borda de subida) | GPIO de clock |
 | 12 | RCLK | **STCP** | clock do armazenamento — **latch** (borda de subida) | GPIO de latch |
-| 13 | OE | OE | habilita as saídas — ativo em **0** | GND (sempre habilitado) |
+| 13 | OE | OE | habilita as saídas — ativo em **0** | GND (sempre habilitado); na Parte D, um GPIO |
 | 10 | SRCLR | MR | limpa o registrador — ativo em **0** | VCC (nunca limpa) |
 | 15, 1–7 | QA, QB … QH | Q0, Q1 … Q7 | saídas paralelas | segmentos a … g, dp |
 | 9 | QH′ | **Q7S** | saída serial para a cascata | DS do próximo 595 |
@@ -88,6 +89,10 @@ O diagrama abaixo mostra o sistema completo desta aula: o ESP32 envia os bits pa
 ### O deslocamento, pulso a pulso
 
 Vamos acompanhar o dígito **2** (`0x5B = 0101 1011`) entrando em um 595. Os bits são enviados **do bit 7 para o bit 0**, para que, ao final, o bit 0 (segmento **a**) esteja em Q0.
+
+A animação mostra os dois blocos internos ao mesmo tempo: o registrador de deslocamento muda a cada pulso de **SHCP**, enquanto o registrador de armazenamento (e o display) continua mostrando o dígito anterior, **1**, até o pulso de **STCP**.
+
+![Animação do 74HC595: os 8 bits de 0x5B entram um a um pelo DS a cada pulso de SHCP; o display continua mostrando 1 até o pulso de STCP, quando passa a mostrar 2](../assets/aula07_deslocamento_serial_paralelo.gif)
 
 ![Diagrama de tempo: sinais DS, SHCP e STCP enviando o byte 0x5B, com o conteúdo do registrador após cada pulso](../assets/deslocamento_byte_0x5B.svg)
 
@@ -124,6 +129,40 @@ Em código, a extração de cada bit usa a mesma máscara da Aula 6: `(valor >> 
 
 ---
 
+### OE e o terceiro estado: alta impedância
+
+Até aqui ligamos o **OE** ao GND e esquecemos dele. Mas ele resolve problemas reais, e por trás dele está uma ideia nova da eletrônica digital: uma saída pode ter **três estados**, não só dois.
+
+Pense em cada saída Q do 595 como **duas chaves**: uma liga a saída ao VCC, a outra liga ao GND.
+
+| Estado da saída | Chave para o VCC | Chave para o GND | O que a saída faz | Segmento (catodo comum) |
+|:---:|:---:|:---:|---|:---:|
+| **1** (alto) | fechada | aberta | fornece corrente | acende |
+| **0** (baixo) | aberta | fechada | absorve corrente | apaga |
+| **Z** (alta impedância) | aberta | aberta | **fica desconectada**, como um fio cortado | apaga |
+
+O pino **OE** (*Output Enable*, ativo em **0**) escolhe entre os dois primeiros casos e o terceiro:
+
+- **OE = 0:** as saídas Q0…Q7 mostram o que está no registrador de armazenamento (1 ou 0).
+- **OE = 1:** as saídas Q0…Q7 vão para **Z**, todas ao mesmo tempo. O display apaga, mas **os dados continuam guardados** no latch. Quando o OE volta a 0, o mesmo número reaparece, sem reenviar nada.
+
+![Animação do terceiro estado: chaves de saída do 74HC595 em 1, 0 e Z; com OE em 1 o display apaga mas o latch continua guardando 17; com OE em 0 o 17 volta](../assets/aula07_oe_alta_impedancia.gif)
+
+**Para que serve na prática:**
+
+| Situação | Como o OE ajuda |
+|---|---|
+| **Ao ligar o circuito** | O conteúdo dos registradores é **indefinido** até o programa enviar o primeiro byte: o display mostraria "lixo". Um resistor de **10 kΩ** do OE para o 3,3 V mantém as saídas em Z até o programa carregar os dados e colocar OE em 0. |
+| **Apagar ou piscar o display** | Uma única escrita no OE apaga tudo, sem perder o número guardado (Parte D). |
+| **Ajustar o brilho** | Um sinal PWM no OE liga e desliga as saídas muito rápido; o olho percebe um brilho menor (desafio bônus). |
+| **Compartilhar fios** | Vários chips podem ter as saídas ligadas aos mesmos fios (um **barramento**): só o que está com OE = 0 "fala"; os outros ficam em Z e não atrapalham. É por isso que o datasheet chama essas saídas de *3-state*. |
+
+> 💡 **Dois detalhes do datasheet:**
+> - O **OE não afeta o Q7S**. Mesmo com o display apagado, os bits continuam passando para o próximo 595 da cascata.
+> - O **MR** (*SRCLR*) limpa só o registrador de **deslocamento**; o que está no latch e nas saídas não muda até o próximo pulso de STCP.
+
+---
+
 ## 2. Circuito
 
 ### Ligações
@@ -134,7 +173,7 @@ Em código, a extração de cada bit usa a mesma máscara da Aula 6: `(valor >> 
 | Clock | U1 · SHCP **e** U2 · SHCP | GPIO18 | GP18 |
 | Latch | U1 · STCP **e** U2 · STCP | GPIO21 | GP17 |
 | Cascata | U1 · Q7S → U2 · DS | — | — |
-| Habilita saídas | OE dos dois → GND | GND | GND |
+| Habilita saídas | OE dos dois → GND (na Parte D: → GPIO) | GND (Parte D: GPIO22) | GND (Parte D: GP20) |
 | Reset | MR dos dois → 3,3 V | 3V3 | 3V3(OUT) |
 | Alimentação | VCC dos dois → 3,3 V | 3V3 | 3V3(OUT) |
 
@@ -328,6 +367,69 @@ while True:
 
 ---
 
+### Parte D — OE: apagar o display sem perder os dados
+
+Esta parte usa **um quarto GPIO** para o OE. No circuito, tire os fios do **OE** dos dois 595 do GND e ligue os dois ao **GPIO22** (no Pico, **GP20**). Veja as duas linhas a trocar no `diagram.json`, na seção 4.
+
+> ✅ **Por que GPIO22 e GP20?** São de uso geral e não coincidem com os pinos da SPI usados no desafio bônus (no ESP32, o GPIO19 é o MISO da SPI; no Pico, o GP16).
+
+```python
+# ============================================================
+# Aula 07 — Parte D: OE e alta impedância
+# Mini-curso 05 — Seção 2: Display de 7 Segmentos
+# Plataforma principal: ESP32 · displays de CATODO COMUM
+# OE dos dois 595 ligado ao GPIO22 (no lugar do GND)
+# ============================================================
+
+from machine import Pin
+import utime
+
+ds   = Pin(23, Pin.OUT, value=0)   # DS   — dados
+shcp = Pin(18, Pin.OUT, value=0)   # SHCP — clock (U1 e U2)
+stcp = Pin(21, Pin.OUT, value=0)   # STCP — latch (U1 e U2)
+oe   = Pin(22, Pin.OUT, value=1)   # OE = 1 → saídas em alta impedância
+# Pico: ds = Pin(19, ...)  shcp = Pin(18, ...)  stcp = Pin(17, ...)  oe = Pin(20, ...)
+
+CODIGOS = (0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F, 0x6F)
+
+def pulso(pino):
+    pino.value(1)
+    pino.value(0)
+
+def enviar_byte(valor):
+    for i in range(7, -1, -1):
+        ds.value((valor >> i) & 1)
+        pulso(shcp)
+
+def mostrar_numero(n):
+    enviar_byte(CODIGOS[n // 10])   # dezena primeiro (vai para U2)
+    enviar_byte(CODIGOS[n % 10])    # unidade (fica em U1)
+    pulso(stcp)
+
+# --- 1) carrega o 17 com as saídas desligadas ---
+mostrar_numero(17)
+print("17 está no latch, mas OE = 1: saídas em Z, display apagado")
+utime.sleep(2)
+
+# --- 2) habilita as saídas ---
+oe.value(0)
+print("OE = 0: saídas habilitadas, aparece 17")
+utime.sleep(2)
+
+# --- 3) pisca 6 vezes SEM enviar nenhum byte novo ---
+for i in range(6):
+    oe.value(1)          # alta impedância: apaga
+    utime.sleep(0.4)
+    oe.value(0)          # o mesmo 17 volta
+    utime.sleep(0.4)
+
+print("Piscou 6 vezes; o 17 nunca saiu do latch.")
+```
+
+> 💡 **Repare na ordem do passo 1:** o programa começa com OE = 1, carrega os dados e só depois habilita as saídas. É exatamente o que o resistor de 10 kΩ faz na bancada no momento em que o circuito é ligado.
+
+---
+
 ## 4. Circuito Wokwi — diagram.json
 
 Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 + MicroPython**). O mesmo circuito serve para as Partes A, B e C.
@@ -405,6 +507,22 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 
 ```
 > 💡 No Wokwi os resistores dos segmentos foram omitidos para simplificar o desenho. Na bancada eles são **obrigatórios**.
 
+**Para a Parte D**, troque estas duas linhas do `diagram.json` (OE no GND):
+
+```json
+    [ "sr2:OE", "esp:GND.1", "black", [ "v-8.8", "h-108.16", "v-62.2" ] ],
+    [ "esp:GND.1", "sr1:OE", "black", [ "h23.5", "v62.2", "h288" ] ],
+```
+
+por estas (OE no GPIO22):
+
+```json
+    [ "sr2:OE", "esp:D22", "orange", [] ],
+    [ "sr1:OE", "esp:D22", "orange", [] ],
+```
+
+> ⚠️ Validar no Wokwi: rode a Parte D e confirme que o display começa apagado, mostra 17 e pisca 6 vezes. Na bancada, acrescente um resistor de **10 kΩ** entre o OE e o 3,3 V.
+
 ---
 
 ## 5. Experimento
@@ -442,6 +560,18 @@ Execute a **Parte C**:
 - ligando cada segmento direto no ESP32, como na Aula 6? _____
 - usando 74HC595 em cascata? _____
 
+Execute a **Parte D**:
+
+**f)** No passo 1, o display está apagado. Onde está o número 17 nesse momento: no registrador de deslocamento, no latch ou em lugar nenhum? Como você comprova isso no passo 2?
+
+> _________________________________________________________________
+
+**g)** Complete: com OE = 1, as saídas Q0…Q7 ficam em estado _____, que funciona como um fio _____. Por isso nenhum segmento recebe corrente.
+
+**h)** Na bancada, por que se coloca um resistor de 10 kΩ entre o OE e o 3,3 V, e não entre o OE e o GND?
+
+> _________________________________________________________________
+
 ---
 
 ## 6. Desafio
@@ -477,6 +607,21 @@ def mostrar_numero(n):
 
 > 💡 Ao criar a SPI, o pino de dados passa a ser controlado pelo periférico: **não** crie o `Pin(23, Pin.OUT)` (no Pico, `Pin(19, ...)`) neste programa. Os pinos de clock e de latch continuam iguais.
 
+**Desafio bônus 2 — brilho com PWM no OE (circuito da Parte D):** em vez de só ligar e desligar o OE, mande para ele um sinal PWM. Como o OE é ativo em **0**, a lógica é invertida: quanto **maior** o tempo em 1, **mais fraco** o brilho.
+
+```python
+from machine import PWM
+
+pwm_oe = PWM(Pin(22), freq=1000)        # Pico: PWM(Pin(20)); pwm_oe.freq(1000)
+
+for apagado in (0, 256, 512, 768, 1000):
+    pwm_oe.duty(apagado)                # ESP32: 0 a 1023 · Pico: pwm_oe.duty_u16(apagado * 64)
+    print("tempo em Z: {} %".format(_____ * 100 // 1023))
+    utime.sleep(1)
+```
+
+> 💡 No Wokwi o efeito de brilho pode aparecer como cintilação; na bancada a variação de brilho fica clara.
+
 ---
 
 ## Resumo da aula
@@ -487,6 +632,8 @@ def mostrar_numero(n):
 - **Q7S** liga um 595 ao próximo: com **3 GPIOs** controlamos 8, 16, 24… saídas
 - Na cascata, **o primeiro byte enviado vai mais longe** — por isso enviamos a dezena antes da unidade
 - `n // 10` dá a dezena e `n % 10` dá a unidade
+- **OE = 1** coloca as saídas em **alta impedância (Z)**: desconectadas, como um fio cortado. O display apaga, mas o latch guarda os dados
+- Um resistor de **10 kΩ** do OE para o 3,3 V evita "lixo" no display ao ligar o circuito
 - Alimente o 74HC595 com **3,3 V** junto do ESP32/Pico (ou use o 74HCT595 em 5 V)
 
 ### Referências
