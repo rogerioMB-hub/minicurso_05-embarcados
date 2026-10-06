@@ -102,10 +102,10 @@ title: "Referências e Links Wokwi"
 
 O `diagram.json` completo de cada aula está na própria aula, na seção **4. Circuito Wokwi**:
 
-- [Aula 6 — um display de 7 segmentos](https://rogeriomb-hub.github.io/minicurso_05-embarcados/aulas/aula06-display-7-segmentos) (`wokwi-esp32-devkit-v1` + `wokwi-7segment`)
+- [Aula 6 — um display de 7 segmentos](https://rogeriomb-hub.github.io/minicurso_05-embarcados/aulas/aula06-display-7-segmentos) (`board-esp32-devkit-c-v4` + `wokwi-7segment` + 8 resistores de 330 Ω)
 - [Aula 7 — dois 74HC595 e dois displays](https://rogeriomb-hub.github.io/minicurso_05-embarcados/aulas/aula07-registrador-74hc595) (`wokwi-esp32-devkit-v1` + 2 × `wokwi-74hc595` + 2 × `wokwi-7segment`)
 
-> ⚠️ **Validar antes de publicar** — os dois circuitos foram conferidos pino a pino, mas ainda precisam ser abertos no Wokwi e salvos como projeto; depois substitua os "a criar" da tabela abaixo pelos links reais.
+> ✅ Os dois circuitos têm projeto salvo no Wokwi (links na tabela abaixo). O `diagram.json` da Aula 6 inclui o resistor e o fio do **dp** (GPIO27); se o projeto salvo ainda não tiver esse fio, atualize-o com o arquivo da aula.
 
 ---
 
@@ -122,8 +122,8 @@ O `diagram.json` completo de cada aula está na própria aula, na seção **4. C
 | 4 | Efeitos Animados | mesmo projeto da Aula 1 |
 | 5 | Meteoro, Respiração e Cometa | mesmo projeto da Aula 1 |
 | 05-extra | Codificadores e Decodificadores | — (sem circuito, só terminal) |
-| 6 | Display de 7 Segmentos | [https://wokwi.com/projects/477072108509827073](https://wokwi.com/projects/477072108509827073)] |
-| 7 | Registrador 74HC595 | [https://wokwi.com/projects/477073696806974465](https://wokwi.com/projects/477073696806974465) |
+| 6 | Display de 7 Segmentos | [wokwi.com/projects/477072108509827073](https://wokwi.com/projects/477072108509827073) |
+| 7 | Registrador 74HC595 | [wokwi.com/projects/477073696806974465](https://wokwi.com/projects/477073696806974465) |
 
 > Na Seção 1 todas as aulas usam o mesmo circuito, então um único projeto Wokwi basta. Na Seção 2 são dois projetos: um para a Aula 6 e outro para a Aula 7.
 
