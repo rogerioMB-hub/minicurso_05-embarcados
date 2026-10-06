@@ -17,6 +17,7 @@ Ao final desta aula você será capaz de:
 
 - Diferenciar um **codificador** de um **decodificador**
 - Representar os dígitos de 0 a 9 em **BCD** (4 bits)
+- Converter um número de dois dígitos em BCD usando `//` e `%`, e diferenciar BCD de binário puro
 - Ler a **tabela-verdade** de um decodificador BCD → 7 segmentos
 - Reconhecer os CIs decodificadores CD4511 e 74LS47 e quando cada um é usado
 - Entender por que, no ESP32 e no Pico, o decodificador vira **uma tabela dentro do programa**
@@ -69,19 +70,13 @@ Um número com mais de um dígito usa um grupo de 4 bits **por dígito**. O núm
 
 ---
 
-### O display de 7 segmentos (visão rápida)
-
-O display tem sete segmentos, chamados de **a** até **g**, mais o ponto decimal **dp**:
-
-![Mapa dos segmentos a até g e dp, com o número do bit de cada um](../assets/7seg_mapa_segmentos.svg)
-
-Para desenhar o "7" acendem os segmentos **a**, **b** e **c**. Para o "8", todos. Os detalhes elétricos do componente ficam para a Aula 6.
-
----
-
 ### Tabela-verdade do decodificador BCD → 7 segmentos
 
-Esta é a tabela que um decodificador implementa. `1` significa segmento aceso (display de **catodo comum**, o que usamos em aula):
+O decodificador tem **uma saída para cada segmento** do display, chamados de **a** até **g**. O componente em si (ligação, catodo × anodo, resistores) é estudado na [Aula 6](./aula06-display-7-segmentos.md); aqui interessa só o nome de cada segmento:
+
+![Mapa dos segmentos a até g e dp](../assets/7seg_mapa_segmentos.svg)
+
+Esta é a tabela que um decodificador implementa. `1` significa segmento aceso:
 
 | Dígito | BCD | a | b | c | d | e | f | g |
 |:---:|:---:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
@@ -115,15 +110,7 @@ Os dois recebem 4 bits BCD e entregam os 7 sinais dos segmentos. O CD4511 tem ai
 
 ### A virada: o decodificador vira uma tabela no programa
 
-Com um ESP32 ou um Pico não precisamos do CI decodificador. O microcontrolador **guarda a tabela-verdade na memória** e liga os segmentos diretamente. A tabela acima vira, por exemplo, uma lista de listas:
-
-```python
-DIGITOS = [
-    [1, 1, 1, 1, 1, 1, 0],   # 0
-    [0, 1, 1, 0, 0, 0, 0],   # 1
-    # ... uma linha por dígito
-]
-```
+Com um ESP32 ou um Pico não precisamos do CI decodificador. O microcontrolador **guarda a tabela-verdade na memória** e liga os segmentos diretamente. É exatamente isso que a [Aula 6](./aula06-display-7-segmentos.md) faz, escrevendo a tabela acima de quatro formas: lista, dicionário (duas versões) e tupla de bytes.
 
 Isso traz duas vantagens:
 
@@ -174,61 +161,55 @@ print("Código BCD:    {:04b}".format(numero))
 
 ---
 
-### Parte B — Decodificador: BCD → segmentos
+### Parte B — Número de dois dígitos em BCD
 
-Agora o caminho inverso: o programa percorre os dígitos de 0 a 9, mostra o código BCD e quais segmentos acenderiam.
+Um número como 17 não vira um único código BCD: cada dígito vira **o seu grupo de 4 bits**. Para isso o programa precisa primeiro **separar** o número em dezena e unidade:
+
+| Operação | O que faz | 17 | 42 |
+|---|---|:---:|:---:|
+| `n // 10` | divisão inteira: quantas dezenas cabem | 1 | 4 |
+| `n % 10` | resto da divisão por 10: a unidade | 7 | 2 |
+
+> 📖 **Saiba mais:** `//` já foi usado no cálculo de brilho da [Aula 4](./aula04-efeitos-animados.md) e `%` para "dar a volta" no anel da [Aula 2](./aula02-efeitos-lista.md). A mesma separação volta na [Aula 7](./aula07-registrador-74hc595.md), quando cada display recebe o seu dígito.
 
 ```python
 # ============================================================
-# Aula 05-extra — Parte B: decodificador BCD → 7 segmentos
+# Aula 05-extra — Parte B: número de dois dígitos em BCD
+# Roda igual no ESP32 e no Pico (só usa o terminal)
 # ============================================================
 
-NOMES = "abcdefg"
+def bcd4(d):
+    """Devolve o dígito d (0 a 9) como texto de 4 bits."""
+    return "{:04b}".format(d)
 
-# Tabela-verdade: uma linha por dígito, colunas a b c d e f g
-DIGITOS = [
-    [1, 1, 1, 1, 1, 1, 0],   # 0
-    [0, 1, 1, 0, 0, 0, 0],   # 1
-    [1, 1, 0, 1, 1, 0, 1],   # 2
-    [1, 1, 1, 1, 0, 0, 1],   # 3
-    [0, 1, 1, 0, 0, 1, 1],   # 4
-    [1, 0, 1, 1, 0, 1, 1],   # 5
-    [1, 0, 1, 1, 1, 1, 1],   # 6
-    [1, 1, 1, 0, 0, 0, 0],   # 7
-    [1, 1, 1, 1, 1, 1, 1],   # 8
-    [1, 1, 1, 1, 0, 1, 1],   # 9
-]
+def numero_para_bcd(n):
+    """Separa n (0 a 99) em dezena e unidade e devolve os dois grupos BCD."""
+    dezena  = n // 10
+    unidade = n % 10
+    return bcd4(dezena), bcd4(unidade)
 
-def decodificar(n):
-    """Devolve uma string com os nomes dos segmentos acesos no dígito n."""
-    acesos = ""
-    for i, estado in enumerate(DIGITOS[n]):
-        if estado == 1:
-            acesos = acesos + NOMES[i]
-    return acesos
-
-print("Dígito  BCD   Segmentos acesos")
-for n in range(10):
-    print("  {}    {:04b}  {}".format(n, n, decodificar(n)))
+print("Número  Dezena  Unidade BCD         Binário puro")
+for n in (5, 9, 10, 17, 20, 42, 99):
+    dz, un = numero_para_bcd(n)
+    print("  {:2d}      {}       {}     {} {}   {:08b}".format(n, n // 10, n % 10, dz, un, n))
 ```
 
 **Saída esperada:**
 
 ```
-Dígito  BCD   Segmentos acesos
-  0    0000  abcdef
-  1    0001  bc
-  2    0010  abdeg
-  3    0011  abcdg
-  4    0100  bcfg
-  5    0101  acdfg
-  6    0110  acdefg
-  7    0111  abc
-  8    1000  abcdefg
-  9    1001  abcdfg
+Número  Dezena  Unidade BCD         Binário puro
+   5      0       5     0000 0101   00000101
+   9      0       9     0000 1001   00001001
+  10      1       0     0001 0000   00001010
+  17      1       7     0001 0111   00010001
+  20      2       0     0010 0000   00010100
+  42      4       2     0100 0010   00101010
+  99      9       9     1001 1001   01100011
 ```
 
-> 📖 **Saiba mais:** `enumerate()` devolve, a cada volta do `for`, a posição e o valor do item. Foi apresentado na Aula 3 do Mini-curso 01 e usado nas Aulas 2 e 3 deste mini-curso. → [Mini-curso 01 · Aula 3](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula03-listas-mascaras) · [Extra: for e range()](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula02-extra-for-range) · [Extra: funções](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula03-extra-funcoes)
+> 💡 **BCD não é o mesmo que binário puro.** Em binário puro, 17 é `00010001` (16 + 1). Em BCD, 17 é `0001 0111`: o 1 e o 7 escritos separadamente. O BCD gasta mais bits, mas cada grupo já é um dígito pronto para um decodificador — ou para um display.
+
+> 💡 **`return bcd4(dezena), bcd4(unidade)`** devolve dois valores de uma vez (uma tupla); a linha `dz, un = numero_para_bcd(n)` recebe cada um numa variável.
 
 ---
 
@@ -248,26 +229,28 @@ Não há circuito nesta aula. Use o projeto padrão **ESP32 + MicroPython** do W
 
 > _________________________________________________________________
 
-**c)** Na Parte B, sem rodar o código, complete a linha do dígito 4 a partir da figura do display:
+**c)** Sem rodar o código, escreva o número 38 em BCD e em binário puro. Depois acrescente o 38 na tupla do `for` da Parte B e confira.
 
-```python
-[_____, _____, _____, _____, _____, _____, _____],   # 4
-```
+> BCD: `____ ____`   binário puro: `________`
 
-**d)** O número 20 em BCD tem dois grupos de 4 bits. Escreva-os:
+**d)** O código `1010` nunca aparece dentro de um grupo BCD. Por quê?
 
-> dezena: `____`   unidade: `____`
+> _________________________________________________________________
 
 ---
 
 ## 6. Desafio
 
-**Desafio principal:** acrescente à tabela da Parte B as linhas para as letras **A**, **b**, **C**, **d**, **E** e **F** (posições 10 a 15) e mude o laço para `range(16)`. Desenhe cada letra no papel antes de escrever a linha.
+**Desafio principal — codificador com prioridade:** no experimento b) você viu que, com duas teclas apertadas, o codificador devolve a **menor**. Os codificadores comerciais (como o 74HC147) fazem o contrário: dão **prioridade à tecla de maior número**. Escreva essa versão percorrendo as teclas de 9 para 0:
 
 ```python
-    [_____, _____, _____, _____, _____, _____, _____],   # A (10)
-    [0, 0, 1, 1, 1, 1, 1],                               # b (11)
-    # ...
+def codificar_prioridade(teclas):
+    for numero in range(_____, -1, -1):
+        if teclas[numero] == 1:
+            return _____
+    return -1
+
+print(codificar_prioridade([0, 0, 1, 0, 0, 1, 0, 0, 0, 0]))   # → 5
 ```
 
 **Desafio bônus:** crie a função `codificar_bcd(n)` que devolve uma **lista** com os 4 bits de `n`, do mais significativo para o menos significativo. Use `(n >> i) & 1`.
@@ -288,7 +271,8 @@ print(codificar_bcd(9))   # → [1, 0, 0, 1]
 
 - **Codificador:** muitas entradas, poucas saídas — por exemplo, 10 teclas → 4 bits BCD
 - **Decodificador:** poucas entradas, muitas saídas — por exemplo, 4 bits BCD → 7 segmentos
-- **BCD** representa cada dígito decimal com 4 bits; números maiores usam um grupo por dígito
+- **BCD** representa cada dígito decimal com 4 bits; números maiores usam um grupo por dígito, separado com `//` e `%`
+- BCD não é binário puro: 17 é `0001 0111` em BCD e `00010001` em binário
 - CIs como **CD4511** (catodo comum) e **74LS47** (anodo comum) implementam a tabela-verdade em hardware
 - No ESP32 e no Pico, a **tabela-verdade vira uma estrutura de dados** no programa — lista, dicionário ou tupla, como você verá na Aula 6
 
