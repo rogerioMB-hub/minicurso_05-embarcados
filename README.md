@@ -58,8 +58,13 @@ minicurso_05-embarcados/
     ├── 7seg_mapa_segmentos.svg               ← Aulas 05★ e 6: segmentos e bits
     ├── 7seg_catodo_vs_anodo.svg              ← Aula 6: circuito interno
     ├── codificador_decodificador_blocos.svg  ← Aula 05★: tecla → BCD → segmentos
+    ├── aula06_parteA_lista.gif               ← Aula 6: animação da lista
+    ├── aula06_parteB1_dicionario_bits.gif    ← Aula 6: dicionário com 0 e 1
+    ├── aula06_parteB2_dicionario_nomes.gif   ← Aula 6: dicionário com nomes
+    ├── aula06_parteC_tupla_bytes.gif         ← Aula 6: tupla de bytes
     ├── diagrama_blocos_74hc595_cascata.svg   ← Aula 7: blocos e cascata
-    └── deslocamento_byte_0x5B.svg            ← Aula 7: diagrama de tempo
+    ├── aula07_deslocamento_temporizacao.gif  ← Aula 7: diagrama de tempo e deslocamento
+    └── aula07_oe_alta_impedancia.gif         ← Aula 7: OE e alta impedância
 ```
 
 ---
