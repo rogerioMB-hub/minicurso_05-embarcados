@@ -83,7 +83,7 @@ Use **um resistor por segmento** (8 resistores), nunca um só no pino comum: com
 
 ### Do decodificador para o código
 
-Na [Aula 05-extra](./aula05-extra-codificadores-decodificadores.md) vimos que, no microcontrolador, o decodificador BCD → 7 segmentos vira **uma tabela no programa**. A tabela completa, já com o valor de cada dígito escrito como um byte:
+No microcontrolador, o decodificador BCD → 7 segmentos vira **uma tabela no programa**. É a tabela-verdade da [Aula 05-extra](./aula05-extra-codificadores-decodificadores.md), agora com duas colunas novas: o valor de cada dígito escrito como **um byte**, para catodo e para anodo comum:
 
 | Dígito | Segmentos acesos | `gfedcba` (binário) | Catodo comum | Anodo comum |
 |:---:|---|:---:|:---:|:---:|
