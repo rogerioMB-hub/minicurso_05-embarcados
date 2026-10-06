@@ -17,8 +17,8 @@ Ao final desta aula você será capaz de:
 - Identificar os segmentos **a** a **g** e o ponto **dp** de um display de 7 segmentos
 - Explicar a diferença elétrica entre **catodo comum** e **anodo comum**
 - Ligar um display de catodo comum ao ESP32 (ou ao Pico) com resistores de proteção
-- Escrever dígitos de três formas: **lista**, **dicionário** e **tupla de bytes**
-- Comparar as três formas e escolher a mais adequada para cada situação
+- Escrever dígitos com três estruturas do Python: **lista**, **dicionário** (com 0/1 e com nomes) e **tupla de bytes**
+- Comparar as quatro formas e escolher a mais adequada para cada situação
 
 > 💡 **Novo aqui?** Esta aula transforma a tabela-verdade de um decodificador em código. Se os termos *decodificador*, *BCD* ou *tabela-verdade* ainda não são familiares, leia antes a [Aula 05-extra: Codificadores e Decodificadores](./aula05-extra-codificadores-decodificadores.md).
 
@@ -77,7 +77,7 @@ R = (3,3 V − 1,9 V) / I     →  com R = 330 Ω:  I ≈ 4,2 mA por segmento
 
 Use **um resistor por segmento** (8 resistores), nunca um só no pino comum: com um resistor único, o brilho mudaria conforme o número de segmentos acesos — o "1" ficaria mais forte que o "8".
 
-> 💡 No Wokwi os resistores podem ser omitidos (o simulador não queima LEDs). Na bancada eles são **obrigatórios**.
+> 💡 O circuito do Wokwi desta aula já inclui os 8 resistores de 330 Ω, igual à bancada. O simulador não queimaria os LEDs sem eles, mas montar igual ao real evita esquecê-los no laboratório.
 
 ---
 
@@ -100,13 +100,16 @@ Na [Aula 05-extra](./aula05-extra-codificadores-decodificadores.md) vimos que, n
 
 Repare: a coluna do anodo comum é a do catodo com **todos os bits invertidos**. `0x3F = 0011 1111` vira `0xC0 = 1100 0000`.
 
-Nesta aula vamos escrever essa mesma tabela de **três formas diferentes**:
+Nesta aula vamos escrever essa mesma tabela com **três estruturas** do Python, em quatro passos:
 
 | Parte | Estrutura | Ideia |
 |---|---|---|
-| A | **Lista** de listas | a tabela-verdade copiada linha a linha |
-| B | **Dicionário** | caractere → nomes dos segmentos acesos |
-| C | **Tupla** de bytes | cada dígito é um número de 8 bits |
+| A | **Lista** de listas | a tabela-verdade copiada linha a linha; o dígito é a **posição** |
+| B1 | **Dicionário** de listas | a mesma tabela-verdade, mas cada linha tem um **nome** (o caractere) |
+| B2 | **Dicionário** de nomes | caractere → **nomes** dos segmentos acesos |
+| C | **Tupla** de bytes | cada dígito é **um número** de 8 bits |
+
+Da Parte A para a B1 muda só **como se encontra a linha**; da B1 para a B2 muda **como a linha é escrita**; na C a linha inteira vira um número.
 
 ---
 
@@ -133,13 +136,15 @@ Na bancada: um resistor de **330 Ω** entre cada GPIO e o pino do segmento. Os d
 
 ## 3. Código
 
-As três partes usam **o mesmo circuito** e terminam com o mesmo laço de 0 a 9, para você comparar.
+As quatro partes usam **o mesmo circuito** e a mesma lista de pinos `segmentos`. Muda só a tabela e a função `mostrar()`, para você comparar.
 
 > 📖 **Saiba mais — lista de pinos e `enumerate()`:** guardamos os 7 objetos `Pin` numa lista, na ordem a, b, c, …, g. Assim `segmentos[0]` é o **a** e `segmentos[6]` é o **g**, e um `for` com `enumerate()` percorre todos de uma vez, entregando a posição `i` e o pino. → [Mini-curso 01 · Aula 3: Listas de pinos e máscara de bits](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula03-listas-mascaras)
 
 ### Parte A — Lista de listas
 
 A tabela-verdade do decodificador vira uma **lista com 10 linhas**; cada linha é uma lista com os 7 estados (a até g). `DIGITOS[n]` é a linha do dígito `n`.
+
+![Animação da Parte A: DIGITOS[7] seleciona a linha 7 da lista; o for percorre a linha e acende os segmentos a, b e c](../assets/aula06_parteA_lista.gif)
 
 ```python
 # ============================================================
@@ -192,15 +197,104 @@ while True:
 
 ---
 
-### Parte B — Dicionário
+### Parte B1 — Dicionário com a tabela-verdade
 
-Agora a **chave** é o caractere a mostrar (uma string, como `"7"`) e o **valor** é uma string com os **nomes dos segmentos acesos**. A tabela fica parecida com a figura do display e aceita letras e símbolos.
+Na Parte A o dígito era encontrado pela **posição** na lista: `DIGITOS[7]` é a oitava linha. Isso só funciona para números de 0 a 9 — não existe "posição E".
 
-> 📖 **Saiba mais — dicionário e `.get()`:** um dicionário associa uma chave a um valor, como uma agenda associa um nome a um telefone. `SEGS.get(c, "")` busca a chave `c` e, se ela não existir, devolve `""` em vez de travar o programa com `KeyError`. → [Aula 3: Paleta de cores com dicionário](./aula03-paleta-dicionario.md)
+Na Parte B1 a tabela é **exatamente a mesma**, com as mesmas linhas de 0 e 1. A única mudança é que cada linha ganha um **nome**: o próprio caractere. Em vez de procurar pela posição, procuramos pela **chave**: `DIGITOS["7"]`.
+
+| | Parte A — lista | Parte B1 — dicionário |
+|---|---|---|
+| Como a tabela começa | `DIGITOS = [` | `DIGITOS = {` |
+| Como se escreve uma linha | `[1, 1, 1, 0, 0, 0, 0],   # 7` | `"7": [1, 1, 1, 0, 0, 0, 0],` |
+| Como se busca a linha | `DIGITOS[7]` (posição) | `DIGITOS["7"]` (chave) |
+| Pode ter letras? | não | **sim:** `"E": [...]` |
+
+> 📖 **Saiba mais — dicionário e `.get()`:** um dicionário associa uma chave a um valor, como uma agenda associa um nome a um telefone. `DIGITOS.get(c, APAGADO)` busca a chave `c` e, se ela não existir, devolve `APAGADO` em vez de travar o programa com `KeyError`. → [Aula 3: Paleta de cores com dicionário](./aula03-paleta-dicionario.md)
+
+![Animação da Parte B1: a chave "7" é procurada no dicionário; a linha [1,1,1,0,0,0,0] é entregue ao for, que acende a, b e c](../assets/aula06_parteB1_dicionario_bits.gif)
 
 ```python
 # ============================================================
-# Aula 06 — Parte B: dígitos e letras com dicionário
+# Aula 06 — Parte B1: dicionário com a tabela-verdade (0 e 1)
+# ============================================================
+
+from machine import Pin
+import utime
+
+# segmentos:  a   b   c   d   e   f   g
+GPIOS =      [23, 22, 21, 19, 18, 25, 26]
+# Pico: GPIOS = [0, 1, 2, 3, 4, 5, 6]
+
+segmentos = []
+for g in GPIOS:
+    segmentos.append(Pin(g, Pin.OUT))
+
+# --- caractere → estados dos segmentos (a b c d e f g) ---
+DIGITOS = {
+    "0": [1, 1, 1, 1, 1, 1, 0],
+    "1": [0, 1, 1, 0, 0, 0, 0],
+    "2": [1, 1, 0, 1, 1, 0, 1],
+    "3": [1, 1, 1, 1, 0, 0, 1],
+    "4": [0, 1, 1, 0, 0, 1, 1],
+    "5": [1, 0, 1, 1, 0, 1, 1],
+    "6": [1, 0, 1, 1, 1, 1, 1],
+    "7": [1, 1, 1, 0, 0, 0, 0],
+    "8": [1, 1, 1, 1, 1, 1, 1],
+    "9": [1, 1, 1, 1, 0, 1, 1],
+    "E": [1, 0, 0, 1, 1, 1, 1],   # letras também cabem na tabela
+    "-": [0, 0, 0, 0, 0, 0, 1],   # traço do meio
+}
+
+APAGADO = [0, 0, 0, 0, 0, 0, 0]   # usado quando o caractere não existe
+
+def mostrar(c):
+    """Acende o caractere c. Caractere desconhecido apaga o display."""
+    linha = DIGITOS.get(c, APAGADO)     # busca a linha pela CHAVE
+    for i, seg in enumerate(segmentos):
+        seg.value(linha[i])             # igual à Parte A
+
+# --- Contagem de 0 a 9, depois "E" e "-" ---
+while True:
+    for c in "0123456789E-":
+        print("Caractere:", c, "→", DIGITOS.get(c, APAGADO))
+        mostrar(c)
+        utime.sleep(1)
+```
+
+> 💡 **Compare `mostrar()` com a da Parte A:** o `for` é idêntico. Mudou só a primeira linha da função — `DIGITOS[n]` virou `DIGITOS.get(c, APAGADO)`.
+
+> 💡 **`for c in "0123456789E-"`** percorre uma string caractere por caractere: `c` vale `"0"`, depois `"1"`, …, `"E"` e `"-"`. Repare que as chaves são **strings** (`"7"`, com aspas), não números (`7`).
+
+---
+
+### Parte B2 — Dicionário com os nomes dos segmentos
+
+A Parte B1 ainda obriga a contar posições: para saber se o **e** acende no 7, é preciso achar a quinta coluna. Na Parte B2 o valor de cada chave passa a ser uma string com os **nomes dos segmentos acesos** — lê-se direto na figura do display.
+
+| Caractere | Parte B1 (estados) | Parte B2 (nomes) |
+|:---:|---|---|
+| `"7"` | `[1, 1, 1, 0, 0, 0, 0]` | `"abc"` |
+| `"2"` | `[1, 1, 0, 1, 1, 0, 1]` | `"abdeg"` |
+| `"E"` | `[1, 0, 0, 1, 1, 1, 1]` | `"adefg"` |
+
+Como agora a tabela não traz os 0 e 1, a função `mostrar()` precisa **descobrir** o estado de cada segmento. Ela faz isso perguntando, para cada segmento, se o nome dele aparece na string:
+
+| `i` | `NOMES[i]` | `"abc"` contém essa letra? | `seg.value(...)` |
+|:---:|:---:|:---:|:---:|
+| 0 | `"a"` | sim | 1 |
+| 1 | `"b"` | sim | 1 |
+| 2 | `"c"` | sim | 1 |
+| 3 | `"d"` | não | 0 |
+| 4 | `"e"` | não | 0 |
+| 5 | `"f"` | não | 0 |
+| 6 | `"g"` | não | 0 |
+
+![Animação da Parte B2: a chave "7" devolve "abc"; o for testa cada letra de NOMES contra "abc" e acende a, b e c](../assets/aula06_parteB2_dicionario_nomes.gif)
+
+```python
+# ============================================================
+# Aula 06 — Parte B2: dicionário com os nomes dos segmentos
 # ============================================================
 
 from machine import Pin
@@ -249,13 +343,17 @@ while True:
         utime.sleep(1)
 ```
 
-> 💡 **`for c in "0123456789E-"`** percorre uma string caractere por caractere. E `"b" in "abcdg"` vale `True` porque a letra `b` aparece dentro da string.
+> 💡 **`"b" in "abcdg"`** vale `True` porque a letra `b` aparece dentro da string; `"e" in "abc"` vale `False`. É esse `True`/`False` que o `if` transforma em `1` ou `0`.
 
 ---
 
 ### Parte C — Tupla de bytes
 
 Cada dígito vira **um único número de 8 bits**: o bit 0 é o segmento **a**, o bit 1 é o **b**, e assim por diante (veja a figura do início). A tabela inteira cabe numa **tupla** de 10 números.
+
+É a mesma linha das Partes A e B1, escrita de trás para a frente e "compactada" num número: a linha do 7, `[1, 1, 1, 0, 0, 0, 0]` (a b c d e f g), lida do **g** para o **a** fica `0000111`, que é `0x07`.
+
+![Animação da Parte C: CODIGOS[7] = 0x07; a função extrai cada bit com (byte >> i) & 1 e acende a, b e c](../assets/aula06_parteC_tupla_bytes.gif)
 
 > 📖 **Saiba mais — tupla:** uma tupla é uma sequência **imutável**, escrita entre parênteses. É a estrutura certa para uma tabela fixa que o programa só consulta e nunca altera. → [Aula 00-extra: Tuplas em Python](./aula00-extra-tuplas.md)
 
@@ -305,15 +403,17 @@ while True:
 
 ---
 
-### Comparando as três formas
+### Comparando as quatro formas
 
-| | A — Lista | B — Dicionário | C — Tupla de bytes |
-|---|---|---|---|
-| Tamanho da tabela | 10 linhas × 7 valores | 1 linha por caractere | 10 números |
-| Facilidade de ler | ótima (é a tabela-verdade) | ótima (nomes dos segmentos) | exige pensar em bits |
-| Aceita letras e símbolos | sim, mas por índice numérico | **sim, pelo próprio caractere** | sim, mas por índice numérico |
-| Trocar para anodo comum | inverter cada 0/1 | inverter no `seg.value()` | **uma linha** (`~byte & 0xFF`) |
-| Próxima do hardware | média | baixa | **alta: o byte vai inteiro para um registrador** |
+| | A — Lista | B1 — Dicionário de 0/1 | B2 — Dicionário de nomes | C — Tupla de bytes |
+|---|---|---|---|---|
+| Valor guardado para o "7" | `[1,1,1,0,0,0,0]` | `[1,1,1,0,0,0,0]` | `"abc"` | `0x07` |
+| Como se busca | posição `DIGITOS[7]` | chave `DIGITOS["7"]` | chave `SEGS["7"]` | posição `CODIGOS[7]` |
+| Facilidade de ler | ótima (é a tabela-verdade) | ótima (tabela-verdade com nomes) | ótima (nomes da figura) | exige pensar em bits |
+| Aceita letras e símbolos | não | **sim, pelo caractere** | **sim, pelo caractere** | só por índice numérico |
+| `mostrar()` | lê a coluna `i` | lê a coluna `i` | testa `NOMES[i] in acesos` | extrai o bit `(byte >> i) & 1` |
+| Trocar para anodo comum | inverter cada 0/1 | inverter cada 0/1 | inverter no `seg.value()` | **uma linha** (`~byte & 0xFF`) |
+| Próxima do hardware | média | média | baixa | **alta: o byte vai inteiro para um registrador** |
 
 A Parte C é a que usaremos na próxima aula: o **74HC595** recebe exatamente um byte e liga os 8 segmentos de uma vez.
 
@@ -321,7 +421,7 @@ A Parte C é a que usaremos na próxima aula: o **74HC595** recebe exatamente um
 
 ## 4. Circuito Wokwi — diagram.json
 
-Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 + MicroPython**). O mesmo circuito serve para as Partes A, B e C.
+Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 + MicroPython**). O mesmo circuito serve para as Partes A, B1, B2 e C.
 
 ```json
 {
@@ -391,6 +491,13 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 
       "top": 186.35,
       "left": 144,
       "attrs": { "value": "330" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r8",
+      "top": 224.75,
+      "left": 144,
+      "attrs": { "value": "330" }
     }
   ],
   "connections": [
@@ -410,13 +517,17 @@ Cole o conteúdo abaixo no arquivo `diagram.json` do seu projeto Wokwi (**ESP32 
     [ "sevseg1:D", "r6:2", "green", [ "v19.2", "h192", "v115.2" ] ],
     [ "r6:1", "esp:19", "green", [ "v0" ] ],
     [ "esp:21", "r7:1", "green", [ "h0" ] ],
-    [ "r7:2", "sevseg1:C", "green", [ "h18", "v-105.6", "h-163.2" ] ]
+    [ "r7:2", "sevseg1:C", "green", [ "h18", "v-105.6", "h-163.2" ] ],
+    [ "esp:27", "r8:1", "orange", [] ],
+    [ "r8:2", "sevseg1:DP", "orange", [] ]
   ],
   "dependencies": {}
 }
 ```
 
-> ⚠️ **Validar antes de publicar** — rode a Parte A e confirme a contagem de 0 a 9. Os fios são desenhados em linha reta; arraste-os no editor do Wokwi para organizar.
+> ✅ Projeto no Wokwi: [wokwi.com/projects/477072108509827073](https://wokwi.com/projects/477072108509827073)
+>
+> ⚠️ O `diagram.json` acima acrescenta o resistor **r8** e o fio do **dp** (GPIO27), usados no desafio bônus. Atualize o projeto salvo com este arquivo e confira a contagem de 0 a 9 (Parte A) e o ponto aceso (Parte C com o bônus). O fio novo é desenhado em linha reta; arraste-o no editor para organizar.
 
 > ⚠️ **Atenção ao atributo `common`:** o padrão do componente `wokwi-7segment` é **anodo** comum. Sem a linha `"common": "cathode"`, o display mostra os segmentos invertidos.
 
@@ -432,13 +543,18 @@ Execute a **Parte A** e responda:
 [_____, _____, _____, _____, _____, _____, _____],   # 4
 ```
 
-Execute a **Parte B**:
+Execute as **Partes B1 e B2**:
 
-**b)** Acrescente ao dicionário a entrada da letra **H** (segmentos b, c, e, f, g) e inclua-a na string do `for`. Escreva a linha:
+**b)** Acrescente a letra **H** (segmentos b, c, e, f, g) aos dois dicionários e inclua-a na string do `for`. Escreva as duas linhas:
 
 ```python
-"H": "_____",
+"H": [_____, _____, _____, _____, _____, _____, _____],   # Parte B1
+"H": "_____",                                             # Parte B2
 ```
+
+**b2)** Na Parte B1, troque `DIGITOS.get(c, APAGADO)` por `DIGITOS[c]` e mande mostrar `"X"`. O que acontece? Por que o `.get()` evita isso?
+
+> _________________________________________________________________
 
 Execute a **Parte C** e observe o terminal:
 
@@ -454,7 +570,7 @@ Execute a **Parte C** e observe o terminal:
 
 ## 6. Desafio
 
-**Desafio principal:** usando a Parte B, faça um contador **hexadecimal** de 0 a F. Acrescente ao dicionário as letras que faltam (A, b, C, d, F) e mude a string do `for`.
+**Desafio principal:** usando a Parte B2, faça um contador **hexadecimal** de 0 a F. Acrescente ao dicionário as letras que faltam (A, b, C, d, F) e mude a string do `for`.
 
 ```python
 SEGS["A"] = "_____"
@@ -485,7 +601,8 @@ for n in range(10):
 - O display de 7 segmentos tem 8 LEDs (a–g e dp) com **um terminal em comum**
 - **Catodo comum:** COM no GND, segmento acende com `1` · **Anodo comum:** COM no VCC, acende com `0`
 - Cada segmento precisa do **seu próprio resistor** (330 Ω com 3,3 V)
-- A tabela-verdade do decodificador pode virar uma **lista** (Parte A), um **dicionário** (Parte B) ou uma **tupla de bytes** (Parte C)
+- A tabela-verdade do decodificador pode virar uma **lista** (Parte A), um **dicionário** de 0/1 (Parte B1) ou de nomes de segmentos (Parte B2), ou uma **tupla de bytes** (Parte C)
+- Lista e tupla buscam pela **posição**; dicionário busca pela **chave**, o que permite letras e símbolos
 - Com bytes, trocar de catodo para anodo é só inverter os bits: `~byte & 0xFF`
 - Um dígito custou **8 GPIOs**. Dois dígitos custariam 16 — a Aula 7 resolve isso com o 74HC595
 
