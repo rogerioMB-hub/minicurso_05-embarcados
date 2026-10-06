@@ -90,25 +90,28 @@ O diagrama abaixo mostra o sistema completo desta aula: o ESP32 envia os bits pa
 
 Vamos acompanhar o dígito **2** (`0x5B = 0101 1011`) entrando em um 595. Os bits são enviados **do bit 7 para o bit 0**, para que, ao final, o bit 0 (segmento **a**) esteja em Q0.
 
-A animação mostra os dois blocos internos ao mesmo tempo: o registrador de deslocamento muda a cada pulso de **SHCP**, enquanto o registrador de armazenamento (e o display) continua mostrando o dígito anterior, **1**, até o pulso de **STCP**.
+A animação junta o **diagrama de tempo** (em cima) e o **interior do chip** (embaixo). A barra laranja para em cada **borda de subida do SHCP**, e nesse instante o bit que está no DS entra no Q0. Cada bit do 2 tem uma cor própria, para você acompanhar o caminho dele; os bits cinza são do dígito anterior, **1**, que continua no display até a borda do **STCP**.
 
-![Animação do 74HC595: os 8 bits de 0x5B entram um a um pelo DS a cada pulso de SHCP; o display continua mostrando 1 até o pulso de STCP, quando passa a mostrar 2](../assets/aula07_deslocamento_serial_paralelo.gif)
+![Animação do 74HC595: diagrama de tempo com DS, SHCP e STCP e um cursor que para em cada borda de subida do SHCP; a cada borda o bit do DS entra no Q0 e os outros andam uma casa para a direita; o display continua mostrando 1 até a borda do STCP, quando passa a mostrar 2](../assets/aula07_deslocamento_temporizacao.gif)
 
-![Diagrama de tempo: sinais DS, SHCP e STCP enviando o byte 0x5B, com o conteúdo do registrador após cada pulso](../assets/deslocamento_byte_0x5B.svg)
+| Borda | Bit lido no DS | Registrador de deslocamento (Q0 … Q7) | Display |
+|:---:|---|:---:|:---:|
+| antes | — | `0 1 1 0 0 0 0 0` (dígito 1) | 1 |
+| SHCP 1 | 0 — b7 (dp) | `0 0 1 1 0 0 0 0` | 1 |
+| SHCP 2 | 1 — b6 (g) | `1 0 0 1 1 0 0 0` | 1 |
+| SHCP 3 | 0 — b5 (f) | `0 1 0 0 1 1 0 0` | 1 |
+| SHCP 4 | 1 — b4 (e) | `1 0 1 0 0 1 1 0` | 1 |
+| SHCP 5 | 1 — b3 (d) | `1 1 0 1 0 0 1 1` | 1 |
+| SHCP 6 | 0 — b2 (c) | `0 1 1 0 1 0 0 1` | 1 |
+| SHCP 7 | 1 — b1 (b) | `1 0 1 1 0 1 0 0` | 1 |
+| SHCP 8 | 1 — b0 (a) | `1 1 0 1 1 0 1 0` | 1 |
+| **STCP** | — | latch recebe `1 1 0 1 1 0 1 0` | **2** |
 
-| Pulso em SHCP | Bit colocado em DS | Registrador (Q7 … Q0) | Display |
-|:---:|---|:---:|---|
-| 1 | 0 — bit 7 (dp) | `·······0` | sem mudança |
-| 2 | 1 — bit 6 (g) | `······01` | sem mudança |
-| 3 | 0 — bit 5 (f) | `·····010` | sem mudança |
-| 4 | 1 — bit 4 (e) | `····0101` | sem mudança |
-| 5 | 1 — bit 3 (d) | `···01011` | sem mudança |
-| 6 | 0 — bit 2 (c) | `··010110` | sem mudança |
-| 7 | 1 — bit 1 (b) | `·0101101` | sem mudança |
-| 8 | 1 — bit 0 (a) | `01011011` | sem mudança |
-| **pulso em STCP** | — | `01011011` | **mostra "2"** |
+Leia a tabela na diagonal: o b7, que entrou no Q0 na borda 1, aparece uma casa mais à direita a cada linha, até chegar ao Q7 na borda 8. Por isso o **primeiro** bit enviado termina no **dp** e o **último** (b0) termina no segmento **a**.
 
-O ponto `·` representa os bits antigos que ainda estão saindo pela outra ponta. Repare que cada pulso faz com o registrador exatamente o que `(registro << 1) | bit` faz com um número em Python.
+Em Python, cada borda faz com o registrador o que `(registro << 1) | bit` faz com um número: o bit novo vira o bit 0 (Q0) e os outros sobem uma posição. Na figura isso aparece como "uma casa para a direita", porque o Q0 está desenhado à esquerda.
+
+> ⚠️ **Duas ordens de leitura.** A figura e a tabela acima mostram Q0 … Q7 da esquerda para a direita, na ordem física das saídas. Já o terminal da **Parte B** imprime o registrador como **número binário**, na ordem Q7 … Q0 (o bit 0 à direita). Depois da borda 8, por exemplo, a tabela mostra `1 1 0 1 1 0 1 0` e o terminal mostra `01011011`: é o mesmo conteúdo lido ao contrário.
 
 > 📖 **Saiba mais — deslocamento de bits:** `<<` empurra todos os bits uma posição para a esquerda e coloca `0` à direita; o `| bit` coloca o bit novo nessa posição. É o mesmo "LED caminhando" do sequenciador do Mini-curso 01, agora acontecendo dentro de um chip. → [Mini-curso 01 · Aula 4: Deslocamento e escrita direta em porta](https://rogeriomb-hub.github.io/minicurso_01-embarcados/aulas/aula04-deslocamento-escrita-porta)
 
